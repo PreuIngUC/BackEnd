@@ -2,9 +2,16 @@
   "name": "adsumback",
   "version": "1.0.0",
   "description": "Backend de Adsum, una aplicación para pasar lista en el PreuIng.",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "test"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "repository": {
     "type": "git",
@@ -15,5 +22,31 @@
   "bugs": {
     "url": "https://github.com/PreuIngUC/AdsumBack/issues"
   },
-  "homepage": "https://github.com/PreuIngUC/AdsumBack#readme"
+  "homepage": "https://github.com/PreuIngUC/AdsumBack#readme",
+  "dependencies": {
+    "@koa/cors": "^5.0.0",
+    "@koa/router": "^14.0.0",
+    "dotenv": "^17.2.3",
+    "jiti": "^2.6.1",
+    "koa": "^3.0.3",
+    "koa-bodyparser": "^4.4.1",
+    "mongodb": "^6.20.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@eslint/json": "^0.13.2",
+    "@eslint/markdown": "^7.5.0",
+    "@types/koa": "^2.15.0",
+    "@types/koa__cors": "^5.0.0",
+    "@types/koa__router": "^12.0.4",
+    "@types/koa-bodyparser": "^4.3.12",
+    "@types/node": "^20.14.2",
+    "eslint": "^9.39.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.6.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.4.5",
+    "typescript-eslint": "^8.46.2"
+  },
+  "type": "module"
 }
