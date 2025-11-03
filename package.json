@@ -1,0 +1,19 @@
+{
+  "name": "adsumback",
+  "version": "1.0.0",
+  "description": "Backend de Adsum, una aplicación para pasar lista en el PreuIng.",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PreuIngUC/AdsumBack.git"
+  },
+  "author": "Pablo Javier Altamirano Pradenas",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/PreuIngUC/AdsumBack/issues"
+  },
+  "homepage": "https://github.com/PreuIngUC/AdsumBack#readme"
+}
