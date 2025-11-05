@@ -13,11 +13,17 @@ const env = {
   PORT: parseInt(get('PORT')),
   //strings
   FRONTEND_URL: get('FRONTEND_URL'),
+  //strings Auth0
   AUTH0_DOMAIN: get('AUTH0_DOMAIN'),
   AUTH0_CLIENT_ID: get('AUTH0_CLIENT_ID'),
   AUTH0_CLIENT_SECRET: get('AUTH0_CLIENT_SECRET'),
   AUTH0_AUDIENCE: `${get('AUTH0_DOMAIN')}/api/v2/`,
   AUTH0_API_URL: `${get('AUTH0_DOMAIN')}/oauth/token`,
+  //strings MongoDB
+  MONGODB_USER: get('MONGODB_USER'),
+  MONGODB_PASS: get('MONGODB_PASS'),
+  MONGODB_HOST: get('MONGODB_HOST'),
+  MONGODB_NAME: get('MONGODB_NAME'),
   //booleans
   ITS_PROD: get('NODE_ENV') === 'production',
 }
