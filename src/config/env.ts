@@ -20,10 +20,11 @@ const env = {
   AUTH0_AUDIENCE: `${get('AUTH0_DOMAIN')}/api/v2/`,
   AUTH0_API_URL: `${get('AUTH0_DOMAIN')}/oauth/token`,
   //strings MongoDB
-  MONGODB_USER: get('MONGODB_USER'),
-  MONGODB_PASS: get('MONGODB_PASS'),
+  MONGODB_USER: encodeURIComponent(get('MONGODB_USER')),
+  MONGODB_PASS: encodeURIComponent(get('MONGODB_PASS')),
   MONGODB_HOST: get('MONGODB_HOST'),
   MONGODB_NAME: get('MONGODB_NAME'),
+  MONGODB_URI: `mongodb+srv://${encodeURIComponent(get('MONGODB_USER'))}:${encodeURIComponent(get('MONGODB_PASS'))}@${get('MONGODB_HOST')}`,
   //booleans
   ITS_PROD: get('NODE_ENV') === 'production',
 }

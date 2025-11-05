@@ -58,6 +58,15 @@ class AuthApi {
       Authorization: `Bearer ${await this.getToken()}`,
     }
   }
+  static getInstance(): AuthApi {
+    if (AuthApi.instance) return AuthApi.instance
+    AuthApi.instance = new AuthApi()
+    return AuthApi.instance
+  }
+  static async init(): Promise<void> {
+    const inst = AuthApi.getInstance()
+    await inst.getToken()
+  }
   private async post<T, R = unknown>(route: string, data: T): AxiosPromise<R> {
     try {
       return await this.api.post<R>(route, data, { headers: await this.getCurrentHeader() })
@@ -65,15 +74,6 @@ class AuthApi {
       this.logAxiosError(err)
       throw err
     }
-  }
-  static getInstance(): AuthApi {
-    if (AuthApi.instance) return AuthApi.instance
-    AuthApi.instance = new AuthApi()
-    return AuthApi.instance
-  }
-  async init(): Promise<void> {
-    const inst = AuthApi.getInstance()
-    await inst.getToken()
   }
 }
 

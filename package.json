@@ -31,6 +31,7 @@
     "jiti": "^2.6.1",
     "koa": "^3.0.3",
     "koa-bodyparser": "^4.4.1",
+    "mogodb": "^0.0.1-security",
     "mongodb": "^6.20.0"
   },
   "devDependencies": {
