@@ -7,10 +7,6 @@ interface Auth0TokenData {
   token_type: string
 }
 
-interface Auth0PostData {
-  someAtribute: string
-}
-
 class AuthApi {
   private api
   private static instance: AuthApi
@@ -20,11 +16,6 @@ class AuthApi {
     this.api = axios.create({ baseURL: env.AUTH0_API_URL })
     this.auth0Token = ''
     this.expiresAt = 0
-  }
-  static getInstance(): AuthApi {
-    if (AuthApi.instance) return AuthApi.instance
-    AuthApi.instance = new AuthApi()
-    return AuthApi.instance
   }
   private logAxiosError(error: AxiosError | unknown) {
     if (axios.isAxiosError(error) && error.response) {
@@ -67,8 +58,18 @@ class AuthApi {
       Authorization: `Bearer ${await this.getToken()}`,
     }
   }
-  private async post(route: string, data: Auth0PostData) {
-    return this.api.post(route, data, { headers: await this.getCurrentHeader() })
+  private async post<T, R = unknown>(route: string, data: T): AxiosPromise<R> {
+    try {
+      return await this.api.post<R>(route, data, { headers: await this.getCurrentHeader() })
+    } catch (err) {
+      this.logAxiosError(err)
+      throw err
+    }
+  }
+  static getInstance(): AuthApi {
+    if (AuthApi.instance) return AuthApi.instance
+    AuthApi.instance = new AuthApi()
+    return AuthApi.instance
   }
   async init(): Promise<void> {
     const inst = AuthApi.getInstance()
