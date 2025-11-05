@@ -1,8 +1,7 @@
 import app from './app.js'
-import { ENVIRONMENT, PORT } from './config/env.js'
+import env from './config/env.js'
 
-app.listen(PORT, () => {
-  const env = ENVIRONMENT
-  if (env === 'development') console.log(`Escuchando en http://localhost:${PORT}`)
-  else console.log(`LoContaPixelBackend escuchando en el puerto ${PORT}`)
+app.listen(env.PORT, () => {
+  if (!env.ITS_PROD) console.log(`Escuchando en http://localhost:${env.PORT}`)
+  else console.log(`LoContaPixelBackend escuchando en el puerto ${env.PORT}`)
 })
