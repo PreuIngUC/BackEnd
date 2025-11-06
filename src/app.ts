@@ -4,6 +4,7 @@ import bodyParser from 'koa-bodyparser'
 import env from './config/env.js'
 import authMiddleware from './middlewares/authMiddleware.js'
 import globalErrorHandler from './middlewares/globalErrorHandler.js'
+import router from './routes/index.js'
 
 const app: Koa = new Koa()
 
@@ -25,6 +26,7 @@ app.use(bodyParser())
 
 app.use(authMiddleware)
 
-//TODO: poner routes
+app.use(router.routes())
+app.use(router.allowedMethods())
 
 export default app
