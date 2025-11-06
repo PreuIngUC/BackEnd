@@ -19,6 +19,8 @@ const env = {
   AUTH0_CLIENT_SECRET: get('AUTH0_CLIENT_SECRET'),
   AUTH0_AUDIENCE: `${get('AUTH0_DOMAIN')}/api/v2/`,
   AUTH0_API_URL: `${get('AUTH0_DOMAIN')}/oauth/token`,
+  AUTH0_JWKS_URI: `${get('AUTH0_DOMAIN')}/.well-known/jwks.json`,
+  AUTH0_ADSUM_AUDIENCE: `${get('AUTH0_ADSUM_AUDIENCE')}`,
   //strings MongoDB
   MONGODB_USER: encodeURIComponent(get('MONGODB_USER')),
   MONGODB_PASS: encodeURIComponent(get('MONGODB_PASS')),

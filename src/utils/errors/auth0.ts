@@ -5,3 +5,8 @@ export class NoResOnTokenError extends AppError {
     super(message, 503)
   }
 }
+export class UnauthorizedError extends AppError {
+  constructor(message: string = 'No está autorizado para realizar operación con Adsum Backend') {
+    super(message, 401)
+  }
+}

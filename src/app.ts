@@ -2,6 +2,7 @@ import cors from '@koa/cors'
 import Koa from 'koa'
 import bodyParser from 'koa-bodyparser'
 import env from './config/env.js'
+import authMiddleware from './middlewares/authMiddleware.js'
 import globalErrorHandler from './middlewares/globalErrorHandler.js'
 
 const app: Koa = new Koa()
@@ -22,7 +23,7 @@ if (env.ITS_PROD) {
 
 app.use(bodyParser())
 
-//TODO: poner auth middleware
+app.use(authMiddleware)
 
 //TODO: poner routes
 
