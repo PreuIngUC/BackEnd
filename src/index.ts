@@ -3,7 +3,13 @@ import env from './config/env.js'
 import initServices from './loaders/index.js'
 
 await initServices()
-app.listen(env.PORT, () => {
-  if (!env.ITS_PROD) console.log(`Escuchando en http://localhost:${env.PORT}`)
-  else console.log(`AdsumBack escuchando en el puerto ${env.PORT}`)
+
+//Caso LOCAL
+if (!env.ITS_PROD && !env.ITS_PREV) {
+  app.listen(env.PORT, () => {
+  console.log(`Escuchando en http://localhost:${env.PORT}`)
 })
+}
+//Caso Vercel SERVERLESS
+export default app.callback()
+

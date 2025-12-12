@@ -21,14 +21,12 @@ const env = {
   AUTH0_API_URL: `${get('AUTH0_DOMAIN')}/oauth/token`,
   AUTH0_JWKS_URI: `${get('AUTH0_DOMAIN')}/.well-known/jwks.json`,
   AUTH0_ADSUM_AUDIENCE: `${get('AUTH0_ADSUM_AUDIENCE')}`,
-  //strings MongoDB
-  MONGODB_USER: encodeURIComponent(get('MONGODB_USER')),
-  MONGODB_PASS: encodeURIComponent(get('MONGODB_PASS')),
-  MONGODB_HOST: get('MONGODB_HOST'),
-  MONGODB_NAME: get('MONGODB_NAME'),
-  MONGODB_URI: `mongodb+srv://${encodeURIComponent(get('MONGODB_USER'))}:${encodeURIComponent(get('MONGODB_PASS'))}@${get('MONGODB_HOST')}`,
+  //strings Neon
+  DATABASE_URL: `${get('DATABASE_URL')}`,
+  DATABASE_URL_UNPOOLED: `${get('DATABASE_URL_UNPOOLED')}`,
   //booleans
   ITS_PROD: get('NODE_ENV') === 'production',
+  ITS_PREV: get('NODE_ENV') === 'preview',
 }
 
 export default env

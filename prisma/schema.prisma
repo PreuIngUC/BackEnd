@@ -1,0 +1,137 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id String @id @default(uuid()) @db.Uuid
+  auth0Id String @unique @map("auth0_id")
+  rut String @unique
+  names String
+  lastName0 String @map("last_name0")
+  lastName1 String @map("last_name1")
+  email String @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  userRoles UserRole[]
+  courseEnrollements CourseEnrollement[]
+  sectionEnrollements SectionEnrollement[]
+  attendances Attendance[]
+  @@map("users")
+}
+
+model Role {
+  id String @id @default(uuid()) @db.Uuid
+  label String @unique
+
+  userRoles UserRole[]
+
+  courseEnrollements CourseEnrollement[]
+  sectionEnrollements SectionEnrollement[]
+  
+  @@map("roles")
+}
+
+model UserRole {
+  userId String @map("user_id") @db.Uuid
+  roleId String @map("role_id") @db.Uuid
+
+  user User @relation(fields: [userId], references: [id])
+  role Role @relation(fields: [roleId], references: [id])
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model Course {
+  id String @id @default(uuid()) @db.Uuid
+  name String
+
+  sections Section[]
+  courseEnrollements CourseEnrollement[]
+
+  @@map("courses")
+}
+
+model CourseEnrollement {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  roleId String @map("role_id") @db.Uuid
+  courseId String @map("course_id") @db.Uuid
+
+  user User @relation(fields: [userId], references: [id])
+  role Role @relation(fields: [roleId], references: [id])
+  course Course @relation(fields: [courseId], references: [id])
+
+  @@map("course_enrollements")
+}
+
+model Section {
+  id String @id @default(uuid()) @db.Uuid
+  courseId String @map("course_id") @db.Uuid
+
+  course Course @relation(fields: [courseId], references: [id])
+  sectionEnrollements SectionEnrollement[]
+  schedules Schedule[]
+  events Event[]
+
+  @@map("sections")
+}
+
+model SectionEnrollement {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  roleId String @map("role_id") @db.Uuid
+  sectionId String @map("section_id") @db.Uuid
+
+  user User @relation(fields: [userId], references: [id])
+  role Role @relation(fields: [roleId], references: [id])
+  course Section @relation(fields: [sectionId], references: [id])
+
+  @@map("section_enrollements")
+}
+
+model Schedule {
+  id String @id @default(uuid()) @db.Uuid
+  sectionId String @map("section_id") @db.Uuid
+  day Int //domingo -> 0, lunes -> 1...
+  startTime Int @map("start_time") //minutos desde media noche [0, 1439]
+  endTime Int @map("end_time") //minutos desde media noche...
+
+  section Section @relation(fields: [sectionId], references: [id])
+
+  @@map("schedules")
+}
+
+model Event {
+  id String @id @default(uuid()) @db.Uuid
+  sectionId String @map("section_id") @db.Uuid
+  startDateTime DateTime @map("start_date_time")
+  endDateTime DateTime @map("end_date_time")
+
+  section Section @relation(fields: [sectionId], references: [id])
+  attendances Attendance[]
+
+  @@map("events")
+}
+
+model Attendance {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  eventId String @map("event_id") @db.Uuid
+
+  user User @relation(fields: [userId], references: [id])
+  event Event @relation(fields: [eventId], references: [id])
+
+  @@unique([userId, eventId])
+  @@map("attendances")
+}
