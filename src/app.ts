@@ -10,7 +10,7 @@ const app: Koa = new Koa()
 
 app.use(globalErrorHandler)
 
-if (env.ITS_PROD) {
+if (env.ITS_PROD || env.ITS_PREV) {
   app.use(
     cors({
       origin: env.FRONTEND_URL,
