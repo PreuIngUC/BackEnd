@@ -25,8 +25,8 @@ const env = {
   DATABASE_URL: `${get('DATABASE_URL')}`,
   DATABASE_URL_UNPOOLED: `${get('DATABASE_URL_UNPOOLED')}`,
   //booleans
-  ITS_PROD: get('NODE_ENV') === 'production',
-  ITS_PREV: get('NODE_ENV') === 'preview',
+  ITS_PROD: get('VERCEL_ENV') === 'production',
+  ITS_PREV: get('VERCEL_ENV') === 'preview',
 }
 
 export default env
