@@ -1,9 +1,10 @@
 import Router from '@koa/router'
+import { Context } from 'koa'
 import Permissions from '../constants/permissions.js'
 import { UnauthorizedError } from '../utils/errors/auth0.js'
 
 const healthRouter = new Router()
-healthRouter.get('/health', async ctx => {
+healthRouter.get('/health', async (ctx: Context) => {
   if (!ctx?.state?.user?.permissions.includes(Permissions.ReadServerHealth)) {
     throw new UnauthorizedError()
   }

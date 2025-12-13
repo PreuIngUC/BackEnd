@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ES2020", // Node.js moderno soporta esto
-    "module": "NodeNext", // La mejor opción para Node.js actual
-    "moduleResolution": "NodeNext",
+    "target": "ES2023", // Node.js moderno soporta esto
+    "module": "ESNext", // La mejor opción para Node.js actual
+    "moduleResolution": "bundler",
     "lib": ["ES2020"],
     
     "strict": true, // Habilita todas las revisiones estrictas
@@ -10,8 +10,10 @@
     "skipLibCheck": true, // Acelera la compilación
     "forceConsistentCasingInFileNames": true,
 
+
     "outDir": "./dist", // Donde irá el JavaScript compilado
-    "rootDir": "./src"  // Donde vive tu código TypeScript
+    "rootDir": "./src",  // Donde vive tu código TypeScript
+    // "ignoreDeprecations": "6.0"
   },
   "include": ["src/**/*"], // Solo compila lo que está en 'src'
   "exclude": ["node_modules"]

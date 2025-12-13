@@ -9,7 +9,7 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: env(['production', 'preview'].includes(env('NODE_ENV')) ? 'DATABASE_URL' : 'DATABASE_URL_UNPOOLED'),
+    url: env(['production', 'preview'].includes(env('VERCEL_ENV')) ? 'DATABASE_URL' : 'DATABASE_URL_UNPOOLED'),
   },
 });
 //TODO: restaturar rama main una vez se haya deployado la primera versión
