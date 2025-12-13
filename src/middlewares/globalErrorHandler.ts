@@ -7,6 +7,7 @@ const globalErrorHandler = async (ctx: Context, next: Next) => {
       ctx.body = {
         error: 'Not Found',
       }
+      ctx.status = 404
     }
   } catch (err) {
     let errorMessage = 'Internal Server Error'

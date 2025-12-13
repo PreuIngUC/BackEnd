@@ -2,15 +2,17 @@ import Router from '@koa/router'
 import { Context } from 'koa'
 import Permissions from '../constants/permissions.js'
 import { UnauthorizedError } from '../utils/errors/auth0.js'
+import env from '../config/env.js'
 
 const healthRouter = new Router()
 healthRouter.get('/health', async (ctx: Context) => {
   if (!ctx?.state?.user?.permissions.includes(Permissions.ReadServerHealth)) {
     throw new UnauthorizedError()
   }
+  const environment = env.ITS_PREV ? 'PREVIEW' : env.ITS_PROD ? 'PRODUCTION' : 'DEVELOPMENT'
   console.dir(ctx.state.user, { depth: null })
   ctx.body = {
-    message: 'El server funciona y está escuchando requests.',
+    message: `El server funciona y está escuchando requests. El environment es ${environment}.`,
   }
 })
 
