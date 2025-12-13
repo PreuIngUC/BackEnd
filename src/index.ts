@@ -11,5 +11,6 @@ if (!env.ITS_PROD && !env.ITS_PREV) {
 })
 }
 //Caso Vercel SERVERLESS
-export default app.callback()
+const callback = app.callback()
+export default callback
 
