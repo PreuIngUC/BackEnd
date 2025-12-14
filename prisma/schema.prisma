@@ -4,6 +4,9 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
+// Al hacer cambios ejecutar:
+// npx prisma migrate dev --name nombre_del_cambio
+// para migracion y cambio de tipos en TypeScript
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -26,7 +29,29 @@ model User {
   courseEnrollements CourseEnrollement[]
   sectionEnrollements SectionEnrollement[]
   attendances Attendance[]
+  staffProfile StaffProfile[]
+  studentProfile StudentProfile[]
   @@map("users")
+}
+
+model StaffProfile {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  application_state String //TODO: cambiar a enum cuando se definan los estados
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("staff_profile")
+}
+
+model StudentProfile {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  application_state String //TODO: cambiar a enum cuando se definan los estados
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("student_profile")
 }
 
 model Role {
