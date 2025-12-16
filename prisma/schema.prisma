@@ -41,7 +41,7 @@ model StaffProfile {
 
   user User @relation(fields: [userId], references: [id])
 
-  @@map("staff_profile")
+  @@map("staff_profiles")
 }
 
 model StudentProfile {
@@ -51,7 +51,7 @@ model StudentProfile {
 
   user User @relation(fields: [userId], references: [id])
 
-  @@map("student_profile")
+  @@map("student_profiles")
 }
 
 model Role {
