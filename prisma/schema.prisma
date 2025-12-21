@@ -8,8 +8,14 @@
 // npx prisma migrate dev --name nombre_del_cambio
 // para migracion y cambio de tipos en TypeScript
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
+}
+
+generator zod {
+  provider         = "zod-prisma-types"
+  output           = "../src/generated/zod" 
+  useMultipleFiles = true 
+  prismaClientImportPath = "@prisma/client"
 }
 
 datasource db {
@@ -17,27 +23,33 @@ datasource db {
 }
 
 model User {
-  id String @id @default(uuid()) @db.Uuid
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
   auth0Id String @unique @map("auth0_id")
-  rut String @unique
-  names String
-  lastName0 String @map("last_name0")
-  lastName1 String @map("last_name1")
-  email String @unique
+  rut String @unique /// @zod.string.trim().toUpperCase().regex(/^\d{7,8}-[\dK]$/, { message: "Formato inválido" })
+  names String /// @zod.string.min(2).trim()
+  lastName0 String @map("last_name0") /// @zod.string.min(2).trim()
+  lastName1 String @map("last_name1") /// @zod.string.min(2).trim()
+  email String @unique /// @zod.string.email().toLowerCase()
   createdAt DateTime @default(now()) @map("created_at")
   userRoles UserRole[]
-  courseEnrollements CourseEnrollement[]
-  sectionEnrollements SectionEnrollement[]
+  courseEnrolments CourseEnrolment[]
+  sectionEnrolments SectionEnrolment[]
   attendances Attendance[]
   staffProfile StaffProfile[]
   studentProfile StudentProfile[]
   @@map("users")
 }
 
+enum ApplicationState {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
 model StaffProfile {
-  id String @id @default(uuid()) @db.Uuid
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
   userId String @map("user_id") @db.Uuid
-  application_state String //TODO: cambiar a enum cuando se definan los estados
+  application_state ApplicationState @default(PENDING)
 
   user User @relation(fields: [userId], references: [id])
 
@@ -45,9 +57,9 @@ model StaffProfile {
 }
 
 model StudentProfile {
-  id String @id @default(uuid()) @db.Uuid
-  userId String @map("user_id") @db.Uuid
-  application_state String //TODO: cambiar a enum cuando se definan los estados
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
+  userId String @map("user_id") @db.Uuid /// @zod.string.uuid()
+  application_state ApplicationState @default(PENDING)
 
   user User @relation(fields: [userId], references: [id])
 
@@ -55,20 +67,20 @@ model StudentProfile {
 }
 
 model Role {
-  id String @id @default(uuid()) @db.Uuid
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
   label String @unique
 
   userRoles UserRole[]
 
-  courseEnrollements CourseEnrollement[]
-  sectionEnrollements SectionEnrollement[]
+  courseEnrolments CourseEnrolment[]
+  sectionEnrolments SectionEnrolment[]
   
   @@map("roles")
 }
 
 model UserRole {
-  userId String @map("user_id") @db.Uuid
-  roleId String @map("role_id") @db.Uuid
+  userId String @map("user_id") @db.Uuid /// @zod.string.uuid()
+  roleId String @map("role_id") @db.Uuid /// @zod.string.uuid()
 
   user User @relation(fields: [userId], references: [id])
   role Role @relation(fields: [roleId], references: [id])
@@ -78,59 +90,60 @@ model UserRole {
 }
 
 model Course {
-  id String @id @default(uuid()) @db.Uuid
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
   name String
 
   sections Section[]
-  courseEnrollements CourseEnrollement[]
+  courseEnrolments CourseEnrolment[]
 
   @@map("courses")
 }
 
-model CourseEnrollement {
-  id String @id @default(uuid()) @db.Uuid
-  userId String @map("user_id") @db.Uuid
-  roleId String @map("role_id") @db.Uuid
-  courseId String @map("course_id") @db.Uuid
+model CourseEnrolment {
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
+  userId String @map("user_id") @db.Uuid /// @zod.string.uuid()
+  roleId String @map("role_id") @db.Uuid /// @zod.string.uuid()
+  courseId String @map("course_id") @db.Uuid /// @zod.string.uuid()
 
   user User @relation(fields: [userId], references: [id])
   role Role @relation(fields: [roleId], references: [id])
   course Course @relation(fields: [courseId], references: [id])
 
-  @@map("course_enrollements")
+  @@map("course_enrolments")
 }
 
 model Section {
-  id String @id @default(uuid()) @db.Uuid
-  courseId String @map("course_id") @db.Uuid
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
+  courseId String @map("course_id") @db.Uuid /// @zod.string.uuid()
 
   course Course @relation(fields: [courseId], references: [id])
-  sectionEnrollements SectionEnrollement[]
+  sectionEnrolments SectionEnrolment[]
   schedules Schedule[]
   events Event[]
 
   @@map("sections")
 }
 
-model SectionEnrollement {
-  id String @id @default(uuid()) @db.Uuid
-  userId String @map("user_id") @db.Uuid
-  roleId String @map("role_id") @db.Uuid
-  sectionId String @map("section_id") @db.Uuid
+model SectionEnrolment {
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
+  userId String @map("user_id") @db.Uuid /// @zod.string.uuid()
+  roleId String @map("role_id") @db.Uuid /// @zod.string.uuid()
+  sectionId String @map("section_id") @db.Uuid /// @zod.string.uuid()
 
   user User @relation(fields: [userId], references: [id])
   role Role @relation(fields: [roleId], references: [id])
   course Section @relation(fields: [sectionId], references: [id])
 
-  @@map("section_enrollements")
+  @@map("section_enrolments")
 }
 
 model Schedule {
-  id String @id @default(uuid()) @db.Uuid
-  sectionId String @map("section_id") @db.Uuid
-  day Int //domingo -> 0, lunes -> 1...
-  startTime Int @map("start_time") //minutos desde media noche [0, 1439]
-  endTime Int @map("end_time") //minutos desde media noche...
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
+  sectionId String @map("section_id") @db.Uuid /// @zod.string.uuid()
+  day Int /// @zod.number.int().min(0).max(6, { message: "Día debe ser entre 0 y 6" })
+  // Minutos desde la medianoche:
+  startTime Int @map("start_time") /// @zod.number.int().min(0).max(1439)
+  endTime Int @map("end_time") /// @zod.number.int().min(0).max(1439)
 
   section Section @relation(fields: [sectionId], references: [id])
 
@@ -138,8 +151,8 @@ model Schedule {
 }
 
 model Event {
-  id String @id @default(uuid()) @db.Uuid
-  sectionId String @map("section_id") @db.Uuid
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
+  sectionId String @map("section_id") @db.Uuid /// @zod.string.uuid()
   startDateTime DateTime @map("start_date_time")
   endDateTime DateTime @map("end_date_time")
 
@@ -150,9 +163,9 @@ model Event {
 }
 
 model Attendance {
-  id String @id @default(uuid()) @db.Uuid
-  userId String @map("user_id") @db.Uuid
-  eventId String @map("event_id") @db.Uuid
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
+  userId String @map("user_id") @db.Uuid /// @zod.string.uuid()
+  eventId String @map("event_id") @db.Uuid /// @zod.string.uuid()
 
   user User @relation(fields: [userId], references: [id])
   event Event @relation(fields: [eventId], references: [id])

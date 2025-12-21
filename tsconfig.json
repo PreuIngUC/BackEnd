@@ -10,7 +10,6 @@
     "skipLibCheck": true, // Acelera la compilación
     "forceConsistentCasingInFileNames": true,
 
-
     "outDir": "./dist", // Donde irá el JavaScript compilado
     "rootDir": "./src",  // Donde vive tu código TypeScript
     // "ignoreDeprecations": "6.0"
