@@ -7,7 +7,7 @@ export class NoResOnTokenError extends AppError {
 }
 export class UnauthorizedError extends AppError {
   constructor(
-    message: string = 'No está autorizado para realizar esta operación con Adsum Backend',
+    message: string = 'No está autorizado para realizar esta operación',
   ) {
     super(message, 401)
   }

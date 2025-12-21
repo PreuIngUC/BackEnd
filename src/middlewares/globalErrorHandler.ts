@@ -1,6 +1,6 @@
 import { Context, Next } from 'koa'
 
-const globalErrorHandler = async (ctx: Context, next: Next) => {
+async function globalErrorHandler(ctx: Context, next: Next) {
   try {
     await next()
     if (ctx.status === 404 && !ctx.body) {
