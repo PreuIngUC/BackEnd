@@ -49,7 +49,7 @@ enum ApplicationState {
 model StaffProfile {
   id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
   userId String @map("user_id") @db.Uuid
-  application_state ApplicationState @default(PENDING)
+  applicationState ApplicationState @default(PENDING) @map("application_state")
 
   user User @relation(fields: [userId], references: [id])
 
@@ -59,7 +59,7 @@ model StaffProfile {
 model StudentProfile {
   id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
   userId String @map("user_id") @db.Uuid /// @zod.string.uuid()
-  application_state ApplicationState @default(PENDING)
+  applicationState ApplicationState @default(PENDING) @map("application_state")
 
   user User @relation(fields: [userId], references: [id])
 

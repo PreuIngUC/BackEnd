@@ -1,8 +1,6 @@
-// import { Context } from 'koa'
-// import Permissions from '../constants/permissions.js'
-// import { UnauthorizedError } from '../utils/errors/auth0.js'
-// import env from '../config/env.js'
+import type { BodyContext } from "../types/context";
+import type { StaffApplicationDtoType } from "../schemas/users/applications";
 
-// export function createStaffApplication( ctx: Context ) {
-
-// }
+export async function createStaffApplication( ctx: BodyContext<StaffApplicationDtoType> ) {
+    
+}
