@@ -2,7 +2,6 @@ import cors from '@koa/cors'
 import Koa from 'koa'
 import bodyParser from 'koa-bodyparser'
 import env from './config/env.js'
-import authMiddleware from './middlewares/authMiddleware.js'
 import globalErrorHandler from './middlewares/globalErrorHandler.js'
 import router from './routes/index.js'
 
@@ -23,8 +22,6 @@ if (env.ITS_PROD || env.ITS_PREV) {
 }
 
 app.use(bodyParser())
-
-app.use(authMiddleware)
 
 app.use(router.routes())
 app.use(router.allowedMethods())

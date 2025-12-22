@@ -43,7 +43,7 @@ function validateThenHandle<
                 ctx.status = 422
                 ctx.body = {
                     type: 'body_error',
-                    errors: z.flattenError(result.error)
+                    errors: z.treeifyError(result.error)
                 }
                 return
             }
