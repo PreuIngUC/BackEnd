@@ -24,7 +24,7 @@ datasource db {
 
 model User {
   id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
-  auth0Id String @unique @map("auth0_id")
+  auth0Id String? @unique @map("auth0_id")
   rut String @unique /// @zod.string.trim().toUpperCase().regex(/^\d{7,8}-[\dK]$/, { message: "Formato inválido" })
   names String /// @zod.string.min(2).trim()
   lastName0 String @map("last_name0") /// @zod.string.min(2).trim()

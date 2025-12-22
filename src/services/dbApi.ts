@@ -16,10 +16,13 @@ class DbApi {
         const adapter = new PrismaPg({connectionString})
         this.prisma = new PrismaClient({adapter})
     }
-    getInstance(): DbApi {
+    static getInstance(): DbApi {
         if (DbApi.instance) return DbApi.instance
         DbApi.instance = new DbApi()
         return DbApi.instance
+    }
+    user() {
+        return this.prisma.user
     }
 }
 
