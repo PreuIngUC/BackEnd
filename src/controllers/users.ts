@@ -1,6 +1,6 @@
-import type { BodyContext } from "../types/context";
-import type { StaffApplicationDtoType } from "../schemas/users/applications";
-import DbApi from "../services/dbApi";
+import type { BodyContext } from "../types/context.js";
+import type { StaffApplicationDtoType } from "../schemas/users/applications.js";
+import DbApi from "../services/dbApi.js";
 
 const userService = DbApi.getInstance().user()
 
