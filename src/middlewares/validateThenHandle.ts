@@ -1,7 +1,7 @@
 import { Context, Next } from 'koa'
 import { ParsedUrlQuery } from 'querystring'
 import { z, ZodType } from 'zod'
-import { ValidatedContext } from '../types/context'
+import { ValidatedContext } from '../types/context.js'
 import Router from '@koa/router'
 
 type InferOrUnknown<S> = S extends ZodType ? z.infer<S> : unknown

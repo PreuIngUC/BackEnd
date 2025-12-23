@@ -1,6 +1,6 @@
-import Permissions from "../constants/permissions"
+import Permissions from "../constants/permissions.js"
 import { Next, Context } from "koa"
-import { UnauthorizedError } from "../utils/errors/auth0"
+import { UnauthorizedError } from "../utils/errors/auth0.js"
 
 function authorize(required: Permissions) {
     return async (ctx: Context, next: Next ) => {

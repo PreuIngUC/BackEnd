@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { UserSchema, StaffProfileSchema, StudentProfileSchema } from '../../generated/zod'
+import { UserSchema, StaffProfileSchema, StudentProfileSchema } from '../../generated/zod/index.js'
 
 const UserInput = UserSchema.omit({
     id: true,
