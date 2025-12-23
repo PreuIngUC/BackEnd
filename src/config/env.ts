@@ -1,4 +1,8 @@
+import dotenv from 'dotenv'
 import 'dotenv/config'
+
+dotenv.config({ path: '.env.local' })
+dotenv.config({ path: '.env' })
 
 function get(key: string): string {
   const val = process.env[key]

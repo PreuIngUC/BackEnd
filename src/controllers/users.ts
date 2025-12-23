@@ -6,7 +6,7 @@ const userService = DbApi.getInstance().user()
 
 export async function createStaffApplication( ctx: BodyContext<StaffApplicationDtoType> ) {
     const {user, staff} = ctx.request.body
-    const newApplication = userService.create({
+    const newApplication = await userService.create({
         data: {
             ...user,
             staffProfile: {

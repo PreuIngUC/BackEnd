@@ -51,7 +51,6 @@ async function globalErrorHandler(ctx: Context, next: Next) {
     }
   } catch (err) {
     ctx.app.emit('error', err, ctx)
-
     // Errores controlados e identificados con AppError
     if (err instanceof AppError) {
       ctx.status = err.statusCode
@@ -64,6 +63,7 @@ async function globalErrorHandler(ctx: Context, next: Next) {
     // Errores de Prisma
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       handlePrismaError(err, ctx)
+      return
     }
     if (err instanceof Prisma.PrismaClientValidationError) {
       ctx.status = 400
