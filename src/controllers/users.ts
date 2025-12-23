@@ -6,19 +6,28 @@ const userService = DbApi.getInstance().user()
 
 export async function createStaffApplication( ctx: BodyContext<StaffApplicationDtoType> ) {
     const {user, staff} = ctx.request.body
-    const newApplication = await userService.create({
-        data: {
-            ...user,
-            staffProfile: {
-                create: {
-                    ...staff
+    
+    console.log('Creating staff application with data:', JSON.stringify({ user, staff }, null, 2))
+    
+    try {
+        const newApplication = await userService.create({
+            data: {
+                ...user,
+                auth0Id: null, // Explicitly set to null for applications without Auth0 yet
+                staffProfile: {
+                    create: {
+                        ...staff
+                    }
                 }
+            },
+            include: {
+                staffProfile: true
             }
-        },
-        include: {
-            staffProfile: true
-        }
-    })
-    ctx.status = 201
-    ctx.body = newApplication
+        })
+        ctx.status = 201
+        ctx.body = newApplication
+    } catch (error) {
+        console.error('Prisma error details:', error)
+        throw error
+    }
 }

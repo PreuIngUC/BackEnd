@@ -14,7 +14,10 @@ class DbApi {
             connectionString = env.DATABASE_URL_UNPOOLED
         }
         const adapter = new PrismaPg({connectionString})
-        this.prisma = new PrismaClient({adapter})
+        this.prisma = new PrismaClient({
+            adapter,
+            log: env.ITS_PROD || env.ITS_PREV ? ['error', 'warn'] : ['query', 'error', 'warn']
+        })
     }
     static getInstance(): DbApi {
         if (DbApi.instance) return DbApi.instance
@@ -23,6 +26,9 @@ class DbApi {
     }
     user() {
         return this.prisma.user
+    }
+    async disconnect() {
+        await this.prisma.$disconnect()
     }
 }
 
