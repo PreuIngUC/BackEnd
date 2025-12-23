@@ -7,6 +7,12 @@ import router from './routes/index.js'
 
 const app: Koa = new Koa()
 
+app.use(async (ctx, next) => {
+  console.log("[REQ]", ctx.method, ctx.path);
+  await next();
+  console.log("[RES]", ctx.method, ctx.path, ctx.status);
+})
+
 app.use(globalErrorHandler)
 
 if (env.ITS_PROD || env.ITS_PREV) {
