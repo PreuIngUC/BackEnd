@@ -1,6 +1,6 @@
 import Router from '@koa/router'
-import publicRouter from './public'
-import privateRouter from './private'
+import publicRouter from './public/index.js'
+import privateRouter from './private/index.js'
 
 const router = new Router({prefix: '/api'})
 
