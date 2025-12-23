@@ -7,6 +7,8 @@ dotenv.config({ path: '.env' })
 function get(key: string): string {
   const val = process.env[key]
   if (val === undefined || val === null) {
+    console.error(`❌ Missing environment variable: ${key}`)
+    console.error('Available env vars:', Object.keys(process.env).filter(k => !k.includes('SECRET')).join(', '))
     throw new Error(`La variable ${key} no está en .env!!!`)
   }
   return val
