@@ -1,5 +1,5 @@
 import { Context, Next } from 'koa'
-import AppError from '../utils/errors/abstract'
+import AppError from '../utils/errors/abstract.js'
 import { Prisma } from '@prisma/client'
 
 function handlePrismaError(err: Prisma.PrismaClientKnownRequestError, ctx: Context) {
