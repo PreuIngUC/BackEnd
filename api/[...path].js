@@ -1,4 +1,4 @@
-import createApp from '../src/appFactory.js'
+import createApp from '../dist/appFactory.js'
 
 let cachedCallback
 
