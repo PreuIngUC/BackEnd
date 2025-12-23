@@ -14,7 +14,10 @@
     "format:check": "prettier --check .",
     "postinstall": "npm run prisma:generate",
     "prisma:generate": "npx prisma generate",
-    "postprisma:generate": "node scripts/fix-esm-imports.mjs"
+    "postprisma:generate": "npm run fix:zod_imports",
+    "fix:zod_imports": "node scripts/fix-esm-zod-imports.mjs",
+    "postfix:zod_imports": "npm run fix:zod_exports",
+    "fix:zod_exports": "node scripts/fix-esm-zod-exports.mjs"
   },
   "repository": {
     "type": "git",
