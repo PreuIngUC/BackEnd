@@ -30,6 +30,10 @@ class DbApi {
     async disconnect() {
         await this.prisma.$disconnect()
     }
+    static async init(): Promise<void> {
+        const inst = DbApi.getInstance()
+        await inst.prisma.$connect()
+  }
 }
 
 export default DbApi
