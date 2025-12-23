@@ -1,10 +1,15 @@
 import { z } from 'zod'
 import { UserSchema, StaffProfileSchema, StudentProfileSchema } from '../../generated/zod/index.js'
+import rutVerify from '../../utils/rutVerify.js'
 
-const UserInput = UserSchema.omit({
+const UserInputOmited = UserSchema.omit({
     id: true,
     auth0Id: true,
     createdAt: true,
+})
+
+const UserInput = UserInputOmited.extend({
+    rut: z.string().refine(rutVerify, 'El RUT no es válido.')
 })
 
 const StaffInput = StaffProfileSchema.omit({
