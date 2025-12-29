@@ -1,10 +1,12 @@
-import Router from '@koa/router'
+import DocumentedRouter from '../../infrastructure/openapi/documentedRouter.js'
 import healthRouter from './health.js'
 import usersRouter from './users.js'
 
-const publicRouter = new Router({prefix: '/api'})
+const publicRouter = new DocumentedRouter('', { prefix: '/api' })
 
-publicRouter.use(healthRouter.routes(), healthRouter.allowedMethods())
-publicRouter.use(usersRouter.routes(), usersRouter.allowedMethods())
+publicRouter.use(healthRouter.routes())
+publicRouter.use(healthRouter.allowedMethods())
+publicRouter.use(usersRouter.routes())
+publicRouter.use(usersRouter.allowedMethods())
 
 export default publicRouter

@@ -1,19 +1,26 @@
-import Router from '@koa/router'
+import DocumentedRouter from '../infrastructure/openapi/documentedRouter.js'
 import publicRouter from './public/index.js'
 import privateRouter from './private/index.js'
+import { buildOpenApi } from '../infrastructure/openapi/openapi.js'
 
-const router = new Router()
+const router = new DocumentedRouter('')
 
-router.get("/", (ctx) => {
+router.get('/', {}, async ctx => {
   ctx.status = 200
-  ctx.body = "API running"
+  ctx.body = 'API running'
 })
 
-router.get("/favicon.ico", (ctx) => {
+router.get('/favicon.ico', {}, async ctx => {
   ctx.status = 204
 })
 
-router.use(publicRouter.routes(), publicRouter.allowedMethods())
-router.use(privateRouter.routes(), privateRouter.allowedMethods())
+router.use(publicRouter.routes())
+router.use(publicRouter.allowedMethods())
+router.use(privateRouter.routes())
+router.use(privateRouter.allowedMethods())
+
+router.get('/openapi.json', {}, async ctx => {
+  ctx.body = buildOpenApi()
+})
 
 export default router

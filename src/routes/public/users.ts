@@ -1,14 +1,18 @@
-import Router from '@koa/router'
+import DocumentedRouter from '../../infrastructure/openapi/documentedRouter.js'
 import * as controller from '../../controllers/users.js'
-import validateThenHandle from '../../middlewares/validateThenHandle.js'
 import { StaffApplicationDto, StudentApplicationDto } from '../../schemas/users/applications.js'
 
-const usersRouter = new Router()
+const usersRouter = new DocumentedRouter('/api')
 
-usersRouter.post('/staff/application',
-    validateThenHandle({ body: StaffApplicationDto }, controller.createStaffApplication))
-usersRouter.post('/student/application',
-    validateThenHandle({ body: StudentApplicationDto }, controller.createStudentApplication)
+usersRouter.post(
+  '/staff/application',
+  { body: StaffApplicationDto },
+  controller.createStaffApplication,
+)
+usersRouter.post(
+  '/student/application',
+  { body: StudentApplicationDto },
+  controller.createStudentApplication,
 )
 
 export default usersRouter
