@@ -3,7 +3,7 @@
 import env from '../../config/env.js'
 import DocumentedRouter from '../../infrastructure/openapi/documentedRouter.js'
 
-const healthRouter = new DocumentedRouter('/api')
+const healthRouter = new DocumentedRouter('/api/public')
 
 healthRouter.get('/health', {}, async ctx => {
   const environment = env.ITS_PREV ? 'PREVIEW' : env.ITS_PROD ? 'PRODUCTION' : 'DEVELOPMENT'

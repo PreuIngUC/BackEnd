@@ -66,6 +66,7 @@ class DocumentedRouter {
         query: schemas?.query as ZodObject,
         body: schemas?.body
           ? {
+              required: true,
               content: {
                 'application/json': {
                   schema: schemas.body,
