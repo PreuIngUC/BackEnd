@@ -3,6 +3,7 @@ import { ValidatedContext } from '../../types/context.js'
 import Router from '@koa/router'
 import validateThenHandle from '../../middlewares/validateThenHandle.js'
 import { registry } from './openapi.js'
+import { Middleware } from 'koa'
 
 type InferOrUnknown<S> = S extends ZodType ? z.infer<S> : unknown
 
@@ -53,6 +54,7 @@ class DocumentedRouter {
       summary?: string
       tags?: string[]
     },
+    authorizationMiddleware?: Middleware,
   ) {
     const { method, particularPath } = params
     const { response, summary, tags } = optionals
@@ -92,7 +94,14 @@ class DocumentedRouter {
             },
           },
     })
-    this.router[method](particularPath, validateThenHandle(schemas, handler))
+    if (!authorizationMiddleware)
+      this.router[method](particularPath, validateThenHandle(schemas, handler))
+    else
+      this.router[method](
+        particularPath,
+        authorizationMiddleware,
+        validateThenHandle(schemas, handler),
+      )
   }
   post<
     BodySchema extends ZodType | undefined,
@@ -120,6 +129,7 @@ class DocumentedRouter {
       summary?: string
       tags?: string[]
     },
+    authorizationMiddleware?: Middleware,
   ) {
     this.documentedRoute(
       schemas,
@@ -129,6 +139,7 @@ class DocumentedRouter {
         particularPath,
       },
       optionals ?? {},
+      authorizationMiddleware,
     )
   }
   get<
@@ -194,6 +205,7 @@ class DocumentedRouter {
       summary?: string
       tags?: string[]
     },
+    authorizationMiddleware?: Middleware,
   ) {
     this.documentedRoute(
       schemas,
@@ -203,6 +215,7 @@ class DocumentedRouter {
         particularPath,
       },
       optionals ?? {},
+      authorizationMiddleware,
     )
   }
   put<

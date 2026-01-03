@@ -1,4 +1,4 @@
-import Router from "@koa/router"
+import Router from '@koa/router'
 
 /**
  * Contexto tipado para controladores validados.
@@ -9,13 +9,17 @@ import Router from "@koa/router"
 export type ValidatedContext<
   TBody = unknown,
   TQuery = unknown,
-  TParams = unknown
+  TParams = unknown,
 > = Router.RouterContext & {
-  request: Router.RouterContext["request"] & { body: TBody };
-  query: TQuery;
-  params: TParams;
-};
+  request: Router.RouterContext['request'] & { body: TBody }
+  query: TQuery
+  params: TParams
+}
 
 export type QueryContext<T> = ValidatedContext<unknown, T>
 
 export type BodyContext<T> = ValidatedContext<T>
+
+export type ParamsContext<T> = ValidatedContext<unknown, unknown, T>
+
+export type BodyAndParamsContext<TB, TP> = ValidatedContext<TB, unknown, TP>

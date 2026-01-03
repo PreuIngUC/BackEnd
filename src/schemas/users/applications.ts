@@ -32,6 +32,18 @@ export const StudentApplicationDto = z.object({
   student: StudentInput,
 })
 
+export const ApplicationAcceptanceBodyDto = StudentProfileSchema.pick({
+  applicationState: true,
+})
+
+export const ApplicationAcceptanceParamsDto = UserSchema.pick({
+  id: true,
+})
+
 export type StaffApplicationDtoType = z.infer<typeof StaffApplicationDto>
 
 export type StudentApplicationDtoType = z.infer<typeof StudentApplicationDto>
+
+export type ApplicationAcceptanceBodyDtoType = z.infer<typeof ApplicationAcceptanceBodyDto>
+
+export type ApplicationAcceptanceParamsDtoType = z.infer<typeof ApplicationAcceptanceParamsDto>
