@@ -7,7 +7,7 @@ import Permissions from '../../constants/permissions.js'
 const usersRouter = new DocumentedRouter('/api/private')
 
 usersRouter.patch(
-  'student/accept/:id',
+  '/student/accept/:id',
   {
     params: ApplicationAcceptanceParamsDto,
   },
@@ -17,7 +17,7 @@ usersRouter.patch(
 )
 
 usersRouter.patch(
-  'staff/accept/:id',
+  '/staff/accept/:id',
   {
     params: ApplicationAcceptanceParamsDto,
   },
