@@ -9,11 +9,13 @@ interface Auth0TokenData {
 
 class AuthApi {
   private api
+  private managementApi
   private static instance: AuthApi
   private auth0Token: string
   private expiresAt: number
   private constructor() {
     this.api = axios.create({ baseURL: env.AUTH0_API_URL })
+    this.managementApi = axios.create({ baseURL: `${env.AUTH0_DOMAIN}/api/v2` })
     this.auth0Token = ''
     this.expiresAt = 0
   }

@@ -37,6 +37,8 @@ model User {
   attendances Attendance[]
   staffProfile StaffProfile[]
   studentProfile StudentProfile[]
+  creationJob CreationJob[]
+  creationJobItem CreationJobItem[]
   @@map("users")
 }
 
@@ -136,7 +138,7 @@ model SectionEnrolment {
 
   user User @relation(fields: [userId], references: [id])
   role Role @relation(fields: [roleId], references: [id])
-  course Section @relation(fields: [sectionId], references: [id])
+  section Section @relation(fields: [sectionId], references: [id])
 
   @@map("section_enrolments")
 }
@@ -176,4 +178,44 @@ model Attendance {
 
   @@unique([userId, eventId])
   @@map("attendances")
+}
+
+enum CreationJobTarget {
+  STUDENTS
+  STAFF
+}
+
+enum CreationJobStatus {
+  PENDING
+  RUNNING
+  DONE
+  DONE_WITH_ERRORS
+}
+
+model CreationJob {
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
+  creatorId String @map("creator_id") @db.Uuid /// @zod.string.uuid()
+  target CreationJobTarget
+  status CreationJobStatus
+  createdAt DateTime @default(now())
+
+  creator User @relation(fields: [creatorId], references: [id])
+  item CreationJobItem[]
+
+  @@map("creation_jobs")
+}
+
+model CreationJobItem {
+  id String @id @default(uuid()) @db.Uuid
+  jobId String @map("job_id") @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  status CreationJobStatus
+  target CreationJobTarget
+  error String?
+
+  job CreationJob @relation(fields: [jobId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([jobId, userId, target])
+  @@map("creation_job_items")
 }
