@@ -1,4 +1,4 @@
-import type { BodyContext, ParamsContext } from '../types/context.js'
+import type { BodyContext, ParamsContext, VoidContext } from '../types/context.js'
 import type {
   StaffApplicationDtoType,
   StudentApplicationDtoType,
@@ -10,6 +10,8 @@ import { ApplicationError } from '../utils/errors/applications.js'
 const userService = DbApi.getInstance().user()
 const studentProfileService = DbApi.getInstance().studentProfile()
 const staffProfileService = DbApi.getInstance().staffProfile()
+// const creationJobService = DbApi.getInstance().creationJob()
+// const creationJobItemService = DbApi.getInstance().creationJobItem()
 
 //TODO: agregar lógica compleja: caso en que la persona ya había hecho su postulación (ya está en la DB)
 //FIXME: si la postulación permitiera reescribir podría modificar a usuarios que ya fueron aceptados
@@ -98,4 +100,75 @@ export async function acceptStaff(ctx: ParamsContext<ApplicationAcceptanceParams
     },
   })
   ctx.status = 204
+}
+
+//NOTE: si tuvieramos volúmenes muy grandes (cientos) de estudiantes aceptados,
+// sería mejor crear jobs con pocos estudiantes (agregar take al buscar los estudiantes)
+async function startAccountsCreation(ctx: VoidContext, type: 'staff' | 'student') {
+  const profile = type === 'staff' ? 'staffProfile' : 'studentProfile'
+  const applicationState = type === 'staff' ? 'ACCEPTED_AS_STAFF' : 'ACCEPTED_AS_STUDENT'
+  const target = type === 'staff' ? 'STAFF' : 'STUDENTS'
+  const result = DbApi.getInstance()
+    .getPrisma()
+    .$transaction(async tx => {
+      const users = await tx.user.findMany({
+        where: {
+          auth0Id: null,
+          [profile]: {
+            some: {
+              applicationState,
+            },
+          },
+          creationJobItem: {
+            none: {
+              status: {
+                in: ['PENDING', 'RUNNING'],
+              },
+            },
+          },
+        },
+        select: {
+          id: true,
+        },
+      })
+      if (users.length <= 0) {
+        throw new Error('No hay postulantes sin cuenta')
+      }
+      const creator = await tx.user.findUnique({
+        where: {
+          auth0Id: ctx.state.user?.sub,
+        },
+      })
+      if (!creator) {
+        throw new Error('El usuario que envió la solicitud no existe en la DB')
+      }
+      const job = await tx.creationJob.create({
+        data: {
+          creatorId: creator.id,
+          target,
+          status: 'PENDING',
+        },
+      })
+      await tx.creationJobItem.createMany({
+        data: users.map(u => {
+          return {
+            userId: u.id,
+            jobId: job.id,
+            status: 'PENDING',
+            target,
+          }
+        }),
+      })
+      return job.id
+    })
+  ctx.status = 201
+  ctx.body = { jobId: result }
+}
+
+export async function startStudentsCreation(ctx: VoidContext) {
+  return startAccountsCreation(ctx, 'student')
+}
+
+export async function startStaffCreation(ctx: VoidContext) {
+  return startAccountsCreation(ctx, 'staff')
 }

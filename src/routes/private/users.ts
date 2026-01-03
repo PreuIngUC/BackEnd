@@ -26,4 +26,20 @@ usersRouter.patch(
   authorize(Permissions.AcceptStaffApplications),
 )
 
+usersRouter.post(
+  '/students/create',
+  {},
+  controller.startStudentsCreation,
+  {},
+  authorize(Permissions.CreateStudentUsers),
+)
+
+usersRouter.post(
+  '/staff/create',
+  {},
+  controller.startStaffCreation,
+  {},
+  authorize(Permissions.CreateStaffUsers),
+)
+
 export default usersRouter

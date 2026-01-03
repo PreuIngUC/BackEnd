@@ -32,12 +32,21 @@ class DbApi {
   staffProfile() {
     return this.prisma.staffProfile
   }
+  creationJob() {
+    return this.prisma.creationJob
+  }
+  creationJobItem() {
+    return this.prisma.creationJobItem
+  }
   async disconnect() {
     await this.prisma.$disconnect()
   }
   static async init(): Promise<void> {
     const inst = DbApi.getInstance()
     await inst.prisma.$connect()
+  }
+  getPrisma() {
+    return this.prisma
   }
 }
 

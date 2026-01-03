@@ -23,3 +23,5 @@ export type BodyContext<T> = ValidatedContext<T>
 export type ParamsContext<T> = ValidatedContext<unknown, unknown, T>
 
 export type BodyAndParamsContext<TB, TP> = ValidatedContext<TB, unknown, TP>
+
+export type VoidContext = ValidatedContext<unknown, unknown, unknown>
