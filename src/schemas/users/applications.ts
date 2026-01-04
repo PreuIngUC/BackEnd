@@ -40,6 +40,10 @@ export const ApplicationAcceptanceParamsDto = UserSchema.pick({
   id: true,
 })
 
+export const AccountsCreationStepParamsDto = z.object({
+  jobId: z.uuid(),
+})
+
 export type StaffApplicationDtoType = z.infer<typeof StaffApplicationDto>
 
 export type StudentApplicationDtoType = z.infer<typeof StudentApplicationDto>
@@ -47,3 +51,5 @@ export type StudentApplicationDtoType = z.infer<typeof StudentApplicationDto>
 export type ApplicationAcceptanceBodyDtoType = z.infer<typeof ApplicationAcceptanceBodyDto>
 
 export type ApplicationAcceptanceParamsDtoType = z.infer<typeof ApplicationAcceptanceParamsDto>
+
+export type AccountsCreationStepParamsDtoType = z.infer<typeof AccountsCreationStepParamsDto>

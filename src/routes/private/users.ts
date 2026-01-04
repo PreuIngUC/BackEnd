@@ -1,6 +1,9 @@
 import DocumentedRouter from '../../infrastructure/openapi/documentedRouter.js'
 import * as controller from '../../controllers/users.js'
-import { ApplicationAcceptanceParamsDto } from '../../schemas/users/applications.js'
+import {
+  ApplicationAcceptanceParamsDto,
+  AccountsCreationStepParamsDto,
+} from '../../schemas/users/applications.js'
 import authorize from '../../middlewares/authorize.js'
 import Permissions from '../../constants/permissions.js'
 
@@ -38,6 +41,26 @@ usersRouter.post(
   '/staff/create',
   {},
   controller.startStaffCreation,
+  {},
+  authorize(Permissions.CreateStaffUsers),
+)
+
+usersRouter.post(
+  '/students/create/step/:jobId',
+  {
+    params: AccountsCreationStepParamsDto,
+  },
+  controller.studentsCreationStep,
+  {},
+  authorize(Permissions.CreateStudentUsers),
+)
+
+usersRouter.post(
+  '/staff/create/step/:jobId',
+  {
+    params: AccountsCreationStepParamsDto,
+  },
+  controller.staffCreationStep,
   {},
   authorize(Permissions.CreateStaffUsers),
 )

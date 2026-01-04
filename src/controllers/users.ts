@@ -3,14 +3,17 @@ import type {
   StaffApplicationDtoType,
   StudentApplicationDtoType,
   ApplicationAcceptanceParamsDtoType,
+  AccountsCreationStepParamsDtoType,
 } from '../schemas/users/applications.js'
 import DbApi from '../services/dbApi.js'
+import AuthApi from '../services/authApi.js'
 import { ApplicationError } from '../utils/errors/applications.js'
+import axios from 'axios'
 
 const userService = DbApi.getInstance().user()
 const studentProfileService = DbApi.getInstance().studentProfile()
 const staffProfileService = DbApi.getInstance().staffProfile()
-// const creationJobService = DbApi.getInstance().creationJob()
+const creationJobService = DbApi.getInstance().creationJob()
 // const creationJobItemService = DbApi.getInstance().creationJobItem()
 
 //TODO: agregar lógica compleja: caso en que la persona ya había hecho su postulación (ya está en la DB)
@@ -171,4 +174,146 @@ export async function startStudentsCreation(ctx: VoidContext) {
 
 export async function startStaffCreation(ctx: VoidContext) {
   return startAccountsCreation(ctx, 'staff')
+}
+
+async function jobVerifyForAccCreation(jobId: string, type: 'staff' | 'student') {
+  const job = await creationJobService.findUnique({
+    where: {
+      id: jobId,
+    },
+    select: {
+      status: true,
+      target: true,
+    },
+  })
+  if (!job) {
+    throw new Error('El job dado no existe')
+  }
+  if (
+    (job.target === 'STAFF' && type !== 'staff') ||
+    (job.target === 'STUDENTS' && type !== 'student')
+  ) {
+    throw new Error('El job entregado no es para el rol indicado')
+  }
+  if (job.status === 'PENDING') {
+    await creationJobService.update({
+      where: {
+        id: jobId,
+      },
+      data: {
+        status: 'RUNNING',
+      },
+    })
+  }
+}
+
+async function accountsCreationStep(
+  ctx: ParamsContext<AccountsCreationStepParamsDtoType>,
+  type: 'staff' | 'student',
+) {
+  const jobId = ctx.params.jobId
+  await jobVerifyForAccCreation(jobId, type)
+  const users = await userService.findMany({
+    where: {
+      auth0Id: null,
+      creationJobItem: {
+        some: {
+          jobId,
+          status: 'PENDING',
+        },
+      },
+    },
+    take: 10,
+  })
+  const api = AuthApi.getInstance()
+  const profile = type === 'staff' ? 'staffProfile' : 'studentProfile'
+  let created = 0
+  let haveErrors = 0
+  for (const u of users) {
+    try {
+      await api.createAccount(u.email, type)
+      await userService.update({
+        where: {
+          id: u.id,
+        },
+        data: {
+          creationJobItem: {
+            updateMany: {
+              where: {
+                jobId,
+              },
+              data: {
+                status: 'DONE',
+              },
+            },
+          },
+          [profile]: {
+            updateMany: {
+              where: {},
+              data: {
+                applicationState: 'CREATED',
+              },
+            },
+          },
+        },
+      })
+      created++
+    } catch (err) {
+      let errString
+      if (axios.isAxiosError(err)) {
+        errString = JSON.stringify(
+          {
+            message: err.message,
+            status: err.response?.status,
+            data: err.response?.data,
+          },
+          null,
+          2,
+        )
+      } else {
+        errString = JSON.stringify(err, Object.getOwnPropertyNames(err))
+      }
+      await userService.update({
+        where: {
+          id: u.id,
+        },
+        data: {
+          creationJobItem: {
+            updateMany: {
+              where: {
+                jobId,
+              },
+              data: {
+                status: 'DONE_WITH_ERRORS',
+                error: errString,
+              },
+            },
+          },
+        },
+      })
+      haveErrors++
+    }
+    ctx.status = 201
+    ctx.body = { created, haveErrors }
+  }
+
+  // const target = type === 'staff' ? 'STAFF' : 'STUDENTS'
+  // const users = userService.findMany({
+  //   where: {
+  //     creationJobItem: {
+  //       some: {
+  //         jobId,
+  //         status: 'PENDING'
+  //       }
+  //     }
+  //   }
+  // })
+}
+
+export async function studentsCreationStep(ctx: ParamsContext<AccountsCreationStepParamsDtoType>) {
+  return accountsCreationStep(ctx, 'student')
+}
+
+export async function staffCreationStep(ctx: ParamsContext<AccountsCreationStepParamsDtoType>) {
+  return accountsCreationStep(ctx, 'staff')
 }

@@ -69,13 +69,33 @@ class AuthApi {
     const inst = AuthApi.getInstance()
     await inst.getToken()
   }
-  private async post<T, R = unknown>(route: string, data: T): AxiosPromise<R> {
+  private async post<T, R = unknown>(
+    route: string,
+    data: T,
+    to: 'api' | 'managementApi' = 'api',
+  ): AxiosPromise<R> {
     try {
-      return await this.api.post<R>(route, data, { headers: await this.getCurrentHeader() })
+      return await this[to].post<R>(route, data, { headers: await this.getCurrentHeader() })
     } catch (err) {
       this.logAxiosError(err)
       throw err
     }
+  }
+  async createAccount(email: string, role: 'student' | 'staff') {
+    return this.post(
+      '/users',
+      {
+        connection: 'Username-Password-Authentication',
+        email,
+        password: '<RANDOM_STRONG_PASSWORD>',
+        email_verified: false,
+        verify_email: true,
+        app_metadata: {
+          role,
+        },
+      },
+      'managementApi',
+    )
   }
 }
 
