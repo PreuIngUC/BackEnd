@@ -1,10 +1,16 @@
 import axios, { AxiosError, AxiosPromise } from 'axios'
 import env from '../config/env.js'
+import generateStrongPassword from '../utils/generateStrongPassword.js'
+import RoleId from '../constants/roles.js'
 
 interface Auth0TokenData {
   access_token: string
   expires_in: number
   token_type: string
+}
+
+interface Auth0CreateUserRes {
+  user_id: string
 }
 
 class AuthApi {
@@ -81,18 +87,24 @@ class AuthApi {
       throw err
     }
   }
-  async createAccount(email: string, role: 'student' | 'staff') {
-    return this.post(
+  async createAccount(email: string) {
+    return this.post<unknown, Auth0CreateUserRes>(
       '/users',
       {
         connection: 'Username-Password-Authentication',
         email,
-        password: '<RANDOM_STRONG_PASSWORD>',
+        password: generateStrongPassword(),
         email_verified: false,
         verify_email: true,
-        app_metadata: {
-          role,
-        },
+      },
+      'managementApi',
+    )
+  }
+  async assignRoles(auth0Id: string, roleIds: RoleId[]) {
+    return this.post(
+      `/users/${auth0Id}/roles`,
+      {
+        roles: roleIds,
       },
       'managementApi',
     )

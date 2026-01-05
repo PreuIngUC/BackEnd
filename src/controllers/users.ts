@@ -9,6 +9,7 @@ import DbApi from '../services/dbApi.js'
 import AuthApi from '../services/authApi.js'
 import { ApplicationError } from '../utils/errors/applications.js'
 import axios from 'axios'
+import RoleId from '../constants/roles.js'
 
 const userService = DbApi.getInstance().user()
 const studentProfileService = DbApi.getInstance().studentProfile()
@@ -111,7 +112,7 @@ async function startAccountsCreation(ctx: VoidContext, type: 'staff' | 'student'
   const profile = type === 'staff' ? 'staffProfile' : 'studentProfile'
   const applicationState = type === 'staff' ? 'ACCEPTED_AS_STAFF' : 'ACCEPTED_AS_STUDENT'
   const target = type === 'staff' ? 'STAFF' : 'STUDENTS'
-  const result = DbApi.getInstance()
+  const result = await DbApi.getInstance()
     .getPrisma()
     .$transaction(async tx => {
       const users = await tx.user.findMany({
@@ -231,12 +232,13 @@ async function accountsCreationStep(
   let haveErrors = 0
   for (const u of users) {
     try {
-      await api.createAccount(u.email, type)
+      const user = await api.createAccount(u.email)
       await userService.update({
         where: {
           id: u.id,
         },
         data: {
+          auth0Id: user.data.user_id,
           creationJobItem: {
             updateMany: {
               where: {
@@ -257,6 +259,7 @@ async function accountsCreationStep(
           },
         },
       })
+      await api.assignRoles(user.data.user_id, [RoleId[type]])
       created++
     } catch (err) {
       let errString
@@ -293,6 +296,7 @@ async function accountsCreationStep(
       })
       haveErrors++
     }
+    //TODO: poner condicion para terminar el trabajo en curso.
     ctx.status = 201
     ctx.body = { created, haveErrors }
   }
