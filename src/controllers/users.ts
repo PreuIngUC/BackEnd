@@ -15,7 +15,7 @@ const userService = DbApi.getInstance().user()
 const studentProfileService = DbApi.getInstance().studentProfile()
 const staffProfileService = DbApi.getInstance().staffProfile()
 const creationJobService = DbApi.getInstance().creationJob()
-// const creationJobItemService = DbApi.getInstance().creationJobItem()
+const creationJobItemService = DbApi.getInstance().creationJobItem()
 
 //TODO: agregar lógica compleja: caso en que la persona ya había hecho su postulación (ya está en la DB)
 //FIXME: si la postulación permitiera reescribir podría modificar a usuarios que ya fueron aceptados
@@ -208,6 +208,8 @@ async function jobVerifyForAccCreation(jobId: string, type: 'staff' | 'student')
   }
 }
 
+const usersPerStep = 10
+
 async function accountsCreationStep(
   ctx: ParamsContext<AccountsCreationStepParamsDtoType>,
   type: 'staff' | 'student',
@@ -224,7 +226,7 @@ async function accountsCreationStep(
         },
       },
     },
-    take: 10,
+    take: usersPerStep,
   })
   const api = AuthApi.getInstance()
   const profile = type === 'staff' ? 'staffProfile' : 'studentProfile'
@@ -296,22 +298,49 @@ async function accountsCreationStep(
       })
       haveErrors++
     }
-    //TODO: poner condicion para terminar el trabajo en curso.
+    if (created + haveErrors < usersPerStep) {
+      const total = await creationJobItemService.count({
+        where: {
+          jobId,
+        },
+      })
+      const done = await creationJobItemService.count({
+        where: {
+          jobId,
+          status: 'DONE',
+        },
+      })
+      const done_with_errors = await creationJobItemService.count({
+        where: {
+          jobId,
+          status: 'DONE_WITH_ERRORS',
+        },
+      })
+      if (done + done_with_errors >= total && done_with_errors > 0) {
+        await creationJobService.update({
+          where: {
+            id: jobId,
+          },
+          data: {
+            status: 'DONE_WITH_ERRORS',
+          },
+        })
+      } else if (done + done_with_errors >= total) {
+        await creationJobService.update({
+          where: {
+            id: jobId,
+          },
+          data: {
+            status: 'DONE',
+          },
+        })
+      }
+      ctx.status = 201
+      ctx.body = { created, haveErrors, stepsAvailable: false }
+    }
     ctx.status = 201
-    ctx.body = { created, haveErrors }
+    ctx.body = { created, haveErrors, stepsAvailable: true }
   }
-
-  // const target = type === 'staff' ? 'STAFF' : 'STUDENTS'
-  // const users = userService.findMany({
-  //   where: {
-  //     creationJobItem: {
-  //       some: {
-  //         jobId,
-  //         status: 'PENDING'
-  //       }
-  //     }
-  //   }
-  // })
 }
 
 export async function studentsCreationStep(ctx: ParamsContext<AccountsCreationStepParamsDtoType>) {
