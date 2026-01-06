@@ -350,3 +350,22 @@ export async function studentsCreationStep(ctx: ParamsContext<AccountsCreationSt
 export async function staffCreationStep(ctx: ParamsContext<AccountsCreationStepParamsDtoType>) {
   return accountsCreationStep(ctx, 'staff')
 }
+
+export async function readJobStatus(ctx: ParamsContext<AccountsCreationStepParamsDtoType>) {
+  const jobId = ctx.params.jobId
+  const status = (
+    await creationJobService.findUnique({
+      where: {
+        id: jobId,
+      },
+      select: {
+        status: true,
+      },
+    })
+  )?.status
+  if (!status) {
+    throw new Error('No existe ese job')
+  }
+  ctx.status = 200
+  ctx.body = { status }
+}

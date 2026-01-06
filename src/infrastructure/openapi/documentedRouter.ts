@@ -168,6 +168,7 @@ class DocumentedRouter {
       summary?: string
       tags?: string[]
     },
+    authorizationMiddleware?: Middleware,
   ) {
     this.documentedRoute(
       schemas,
@@ -177,6 +178,7 @@ class DocumentedRouter {
         particularPath,
       },
       optionals ?? {},
+      authorizationMiddleware,
     )
   }
   patch<

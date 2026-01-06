@@ -65,4 +65,14 @@ usersRouter.post(
   authorize(Permissions.CreateStaffUsers),
 )
 
+usersRouter.get(
+  '/jobs/status/:jobId',
+  {
+    params: AccountsCreationStepParamsDto,
+  },
+  controller.readJobStatus,
+  {},
+  authorize(Permissions.ReadJobsStatus),
+)
+
 export default usersRouter
