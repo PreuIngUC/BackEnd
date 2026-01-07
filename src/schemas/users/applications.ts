@@ -44,6 +44,16 @@ export const AccountsCreationStepParamsDto = z.object({
   jobId: z.uuid(),
 })
 
+export const VerifyThenPasswordBodyDto = UserSchema.omit({
+  id: true,
+  auth0Id: true,
+  names: true,
+  lastName0: true,
+  lastName1: true,
+  email: true,
+  createdAt: true,
+})
+
 export type StaffApplicationDtoType = z.infer<typeof StaffApplicationDto>
 
 export type StudentApplicationDtoType = z.infer<typeof StudentApplicationDto>
@@ -53,3 +63,5 @@ export type ApplicationAcceptanceBodyDtoType = z.infer<typeof ApplicationAccepta
 export type ApplicationAcceptanceParamsDtoType = z.infer<typeof ApplicationAcceptanceParamsDto>
 
 export type AccountsCreationStepParamsDtoType = z.infer<typeof AccountsCreationStepParamsDto>
+
+export type VerifyThenPasswordBodyDtoType = z.infer<typeof VerifyThenPasswordBodyDto>

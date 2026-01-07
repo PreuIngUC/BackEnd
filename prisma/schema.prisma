@@ -35,8 +35,8 @@ model User {
   courseEnrolments CourseEnrolment[]
   sectionEnrolments SectionEnrolment[]
   attendances Attendance[]
-  staffProfile StaffProfile[]
-  studentProfile StudentProfile[]
+  staffProfile StaffProfile?
+  studentProfile StudentProfile?
   creationJob CreationJob[]
   creationJobItem CreationJobItem[]
   @@map("users")
@@ -54,7 +54,7 @@ enum ApplicationState {
 
 model StaffProfile {
   id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
-  userId String @map("user_id") @db.Uuid
+  userId String @map("user_id") @db.Uuid @unique
   applicationState ApplicationState @default(PENDING_AS_STAFF) @map("application_state")
 
   user User @relation(fields: [userId], references: [id])
@@ -64,7 +64,7 @@ model StaffProfile {
 
 model StudentProfile {
   id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
-  userId String @map("user_id") @db.Uuid /// @zod.string.uuid()
+  userId String @map("user_id") @db.Uuid @unique /// @zod.string.uuid()
   applicationState ApplicationState @default(PENDING_AS_STUDENT) @map("application_state")
 
   user User @relation(fields: [userId], references: [id])

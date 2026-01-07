@@ -4,6 +4,7 @@ import type {
   StudentApplicationDtoType,
   ApplicationAcceptanceParamsDtoType,
   AccountsCreationStepParamsDtoType,
+  VerifyThenPasswordBodyDtoType,
 } from '../schemas/users/applications.js'
 import DbApi from '../services/dbApi.js'
 import AuthApi from '../services/authApi.js'
@@ -368,4 +369,63 @@ export async function readJobStatus(ctx: ParamsContext<AccountsCreationStepParam
   }
   ctx.status = 200
   ctx.body = { status }
+}
+
+export async function verifyThenChangePassword(ctx: BodyContext<VerifyThenPasswordBodyDtoType>) {
+  const rut = ctx.request.body.rut
+  const user = await userService.findUnique({
+    where: {
+      rut,
+    },
+    select: {
+      id: true,
+      email: true,
+      staffProfile: {
+        select: {
+          applicationState: true,
+        },
+      },
+      studentProfile: {
+        select: {
+          applicationState: true,
+        },
+      },
+    },
+  })
+  if (!user) {
+    throw new Error('Usuario no existe')
+  }
+  if (!user.staffProfile && !user.studentProfile) {
+    throw new Error('El usuario no tiene un perfil')
+  }
+  if (
+    user.staffProfile?.applicationState === 'ACTIVE' ||
+    user.studentProfile?.applicationState === 'ACTIVE'
+  ) {
+    throw new Error('Este usuario ya está activo, ya tiene contraseña.')
+  }
+  if (
+    user.staffProfile?.applicationState !== 'CREATED' &&
+    user.studentProfile?.applicationState !== 'CREATED'
+  ) {
+    throw new Error('Este usuario no ha sido creado todavía en Auth0.')
+  }
+  const profile =
+    user.staffProfile?.applicationState === 'CREATED' ? 'staffProfile' : 'studentProfile'
+  await AuthApi.getInstance().triggerPassWordChange(user.email)
+  await userService.update({
+    where: {
+      id: user.id,
+    },
+    data: {
+      [profile]: {
+        update: {
+          data: {
+            applicationState: 'ACTIVE',
+          },
+        },
+      },
+    },
+  })
+  ctx.status = 204
 }

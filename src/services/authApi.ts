@@ -14,14 +14,16 @@ interface Auth0CreateUserRes {
 }
 
 class AuthApi {
-  private api
+  private tokenApi
   private managementApi
+  private dbConnectionsApi
   private static instance: AuthApi
   private auth0Token: string
   private expiresAt: number
   private constructor() {
-    this.api = axios.create({ baseURL: env.AUTH0_API_URL })
-    this.managementApi = axios.create({ baseURL: `${env.AUTH0_DOMAIN}/api/v2` })
+    this.tokenApi = axios.create({ baseURL: env.AUTH0_TOKEN_URL })
+    this.managementApi = axios.create({ baseURL: env.AUTH0_MANAGEMENT_URL })
+    this.dbConnectionsApi = axios.create({ baseURL: env.AUTH0_DB_CONNECTIONS_URL })
     this.auth0Token = ''
     this.expiresAt = 0
   }
@@ -35,7 +37,7 @@ class AuthApi {
   }
   private async fetchToken(): AxiosPromise<Auth0TokenData> {
     try {
-      return this.api.post<Auth0TokenData>(
+      return this.tokenApi.post<Auth0TokenData>(
         '/',
         {
           client_id: env.AUTH0_CLIENT_ID,
@@ -61,9 +63,10 @@ class AuthApi {
     this.expiresAt = Date.now() + data.expires_in * 1000
     return this.auth0Token
   }
-  private async getCurrentHeader() {
+  private async getCurrentHeader(contentType: boolean = false) {
     return {
       Authorization: `Bearer ${await this.getToken()}`,
+      'content-type': contentType ? 'application/json' : undefined,
     }
   }
   static getInstance(): AuthApi {
@@ -78,10 +81,13 @@ class AuthApi {
   private async post<T, R = unknown>(
     route: string,
     data: T,
-    to: 'api' | 'managementApi' = 'api',
+    to: 'tokenApi' | 'managementApi' | 'dbConnectionsApi' = 'tokenApi',
+    contentType: boolean = false,
   ): AxiosPromise<R> {
     try {
-      return await this[to].post<R>(route, data, { headers: await this.getCurrentHeader() })
+      return await this[to].post<R>(route, data, {
+        headers: await this.getCurrentHeader(contentType),
+      })
     } catch (err) {
       this.logAxiosError(err)
       throw err
@@ -107,6 +113,18 @@ class AuthApi {
         roles: roleIds,
       },
       'managementApi',
+    )
+  }
+  async triggerPassWordChange(email: string) {
+    return this.post(
+      '/change_password',
+      {
+        client_id: env.AUTH0_PUBLIC_CLIENT_ID,
+        email,
+        connection: 'Username-Password-Authentication',
+      },
+      'dbConnectionsApi',
+      true,
     )
   }
 }
