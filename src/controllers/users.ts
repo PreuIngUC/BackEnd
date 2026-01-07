@@ -3,20 +3,17 @@ import type {
   StaffApplicationDtoType,
   StudentApplicationDtoType,
   ApplicationAcceptanceParamsDtoType,
-  AccountsCreationStepParamsDtoType,
   VerifyThenPasswordBodyDtoType,
 } from '../schemas/users/applications.js'
 import DbApi from '../services/dbApi.js'
 import AuthApi from '../services/authApi.js'
 import { ApplicationError } from '../utils/errors/applications.js'
-import axios from 'axios'
-import RoleId from '../constants/roles.js'
 
 const userService = DbApi.getInstance().user()
 const studentProfileService = DbApi.getInstance().studentProfile()
 const staffProfileService = DbApi.getInstance().staffProfile()
-const creationJobService = DbApi.getInstance().creationJob()
-const creationJobItemService = DbApi.getInstance().creationJobItem()
+
+//TODO GENERAL: Agregar errores específicos
 
 //TODO: agregar lógica compleja: caso en que la persona ya había hecho su postulación (ya está en la DB)
 //FIXME: si la postulación permitiera reescribir podría modificar a usuarios que ya fueron aceptados
@@ -57,6 +54,40 @@ export async function createStudentApplication(ctx: BodyContext<StudentApplicati
   })
   ctx.status = 201
   ctx.body = newUser
+}
+
+async function getApplications(type: 'staff' | 'student') {
+  const profile = type === 'staff' ? 'staffProfile' : 'studentProfile'
+  const users = await userService.findMany({
+    where: {
+      [profile]: {
+        applicationState: type === 'staff' ? 'PENDING_AS_STAFF' : 'PENDING_AS_STUDENT',
+      },
+    },
+    include: {
+      [profile]: true,
+    },
+    omit: {
+      auth0Id: true,
+    },
+  })
+  return users
+}
+
+export async function getStudentApplications(ctx: VoidContext) {
+  const users = await getApplications('student')
+  ctx.status = 200
+  ctx.body = {
+    users,
+  }
+}
+
+export async function getStaffApplications(ctx: VoidContext) {
+  const users = await getApplications('staff')
+  ctx.status = 200
+  ctx.body = {
+    users,
+  }
 }
 
 export async function acceptStudent(ctx: ParamsContext<ApplicationAcceptanceParamsDtoType>) {
@@ -107,268 +138,32 @@ export async function acceptStaff(ctx: ParamsContext<ApplicationAcceptanceParams
   ctx.status = 204
 }
 
-//NOTE: si tuvieramos volúmenes muy grandes (cientos) de estudiantes aceptados,
-// sería mejor crear jobs con pocos estudiantes (agregar take al buscar los estudiantes)
-async function startAccountsCreation(ctx: VoidContext, type: 'staff' | 'student') {
+async function getAcceptedUsers(type: 'staff' | 'student') {
   const profile = type === 'staff' ? 'staffProfile' : 'studentProfile'
-  const applicationState = type === 'staff' ? 'ACCEPTED_AS_STAFF' : 'ACCEPTED_AS_STUDENT'
-  const target = type === 'staff' ? 'STAFF' : 'STUDENTS'
-  const result = await DbApi.getInstance()
-    .getPrisma()
-    .$transaction(async tx => {
-      const users = await tx.user.findMany({
-        where: {
-          auth0Id: null,
-          [profile]: {
-            some: {
-              applicationState,
-            },
-          },
-          creationJobItem: {
-            none: {
-              status: {
-                in: ['PENDING', 'RUNNING'],
-              },
-            },
-          },
-        },
-        select: {
-          id: true,
-        },
-      })
-      if (users.length <= 0) {
-        throw new Error('No hay postulantes sin cuenta')
-      }
-      const creator = await tx.user.findUnique({
-        where: {
-          auth0Id: ctx.state.user?.sub,
-        },
-      })
-      if (!creator) {
-        throw new Error('El usuario que envió la solicitud no existe en la DB')
-      }
-      const job = await tx.creationJob.create({
-        data: {
-          creatorId: creator.id,
-          target,
-          status: 'PENDING',
-        },
-      })
-      await tx.creationJobItem.createMany({
-        data: users.map(u => {
-          return {
-            userId: u.id,
-            jobId: job.id,
-            status: 'PENDING',
-            target,
-          }
-        }),
-      })
-      return job.id
-    })
-  ctx.status = 201
-  ctx.body = { jobId: result }
-}
-
-export async function startStudentsCreation(ctx: VoidContext) {
-  return startAccountsCreation(ctx, 'student')
-}
-
-export async function startStaffCreation(ctx: VoidContext) {
-  return startAccountsCreation(ctx, 'staff')
-}
-
-async function jobVerifyForAccCreation(jobId: string, type: 'staff' | 'student') {
-  const job = await creationJobService.findUnique({
+  const users = userService.findMany({
     where: {
-      id: jobId,
-    },
-    select: {
-      status: true,
-      target: true,
+      [profile]: {
+        applicationState: type === 'staff' ? 'ACCEPTED_AS_STAFF' : 'ACCEPTED_AS_STUDENT',
+      },
     },
   })
-  if (!job) {
-    throw new Error('El job dado no existe')
-  }
-  if (
-    (job.target === 'STAFF' && type !== 'staff') ||
-    (job.target === 'STUDENTS' && type !== 'student')
-  ) {
-    throw new Error('El job entregado no es para el rol indicado')
-  }
-  if (job.status === 'PENDING') {
-    await creationJobService.update({
-      where: {
-        id: jobId,
-      },
-      data: {
-        status: 'RUNNING',
-      },
-    })
-  }
+  return users
 }
 
-const usersPerStep = 10
-
-async function accountsCreationStep(
-  ctx: ParamsContext<AccountsCreationStepParamsDtoType>,
-  type: 'staff' | 'student',
-) {
-  const jobId = ctx.params.jobId
-  await jobVerifyForAccCreation(jobId, type)
-  const users = await userService.findMany({
-    where: {
-      auth0Id: null,
-      creationJobItem: {
-        some: {
-          jobId,
-          status: 'PENDING',
-        },
-      },
-    },
-    take: usersPerStep,
-  })
-  const api = AuthApi.getInstance()
-  const profile = type === 'staff' ? 'staffProfile' : 'studentProfile'
-  let created = 0
-  let haveErrors = 0
-  for (const u of users) {
-    try {
-      const user = await api.createAccount(u.email)
-      await userService.update({
-        where: {
-          id: u.id,
-        },
-        data: {
-          auth0Id: user.data.user_id,
-          creationJobItem: {
-            updateMany: {
-              where: {
-                jobId,
-              },
-              data: {
-                status: 'DONE',
-              },
-            },
-          },
-          [profile]: {
-            updateMany: {
-              where: {},
-              data: {
-                applicationState: 'CREATED',
-              },
-            },
-          },
-        },
-      })
-      await api.assignRoles(user.data.user_id, [RoleId[type]])
-      created++
-    } catch (err) {
-      let errString
-      if (axios.isAxiosError(err)) {
-        errString = JSON.stringify(
-          {
-            message: err.message,
-            status: err.response?.status,
-            data: err.response?.data,
-          },
-          null,
-          2,
-        )
-      } else {
-        errString = JSON.stringify(err, Object.getOwnPropertyNames(err))
-      }
-      await userService.update({
-        where: {
-          id: u.id,
-        },
-        data: {
-          creationJobItem: {
-            updateMany: {
-              where: {
-                jobId,
-              },
-              data: {
-                status: 'DONE_WITH_ERRORS',
-                error: errString,
-              },
-            },
-          },
-        },
-      })
-      haveErrors++
-    }
-    if (created + haveErrors < usersPerStep) {
-      const total = await creationJobItemService.count({
-        where: {
-          jobId,
-        },
-      })
-      const done = await creationJobItemService.count({
-        where: {
-          jobId,
-          status: 'DONE',
-        },
-      })
-      const done_with_errors = await creationJobItemService.count({
-        where: {
-          jobId,
-          status: 'DONE_WITH_ERRORS',
-        },
-      })
-      if (done + done_with_errors >= total && done_with_errors > 0) {
-        await creationJobService.update({
-          where: {
-            id: jobId,
-          },
-          data: {
-            status: 'DONE_WITH_ERRORS',
-          },
-        })
-      } else if (done + done_with_errors >= total) {
-        await creationJobService.update({
-          where: {
-            id: jobId,
-          },
-          data: {
-            status: 'DONE',
-          },
-        })
-      }
-      ctx.status = 201
-      ctx.body = { created, haveErrors, stepsAvailable: false }
-    }
-    ctx.status = 201
-    ctx.body = { created, haveErrors, stepsAvailable: true }
-  }
-}
-
-export async function studentsCreationStep(ctx: ParamsContext<AccountsCreationStepParamsDtoType>) {
-  return accountsCreationStep(ctx, 'student')
-}
-
-export async function staffCreationStep(ctx: ParamsContext<AccountsCreationStepParamsDtoType>) {
-  return accountsCreationStep(ctx, 'staff')
-}
-
-export async function readJobStatus(ctx: ParamsContext<AccountsCreationStepParamsDtoType>) {
-  const jobId = ctx.params.jobId
-  const status = (
-    await creationJobService.findUnique({
-      where: {
-        id: jobId,
-      },
-      select: {
-        status: true,
-      },
-    })
-  )?.status
-  if (!status) {
-    throw new Error('No existe ese job')
-  }
+export async function getAcceptedStudents(ctx: VoidContext) {
+  const users = await getAcceptedUsers('student')
   ctx.status = 200
-  ctx.body = { status }
+  ctx.body = {
+    users,
+  }
+}
+
+export async function getAcceptedStaff(ctx: VoidContext) {
+  const users = await getAcceptedUsers('staff')
+  ctx.status = 200
+  ctx.body = {
+    users,
+  }
 }
 
 export async function verifyThenChangePassword(ctx: BodyContext<VerifyThenPasswordBodyDtoType>) {

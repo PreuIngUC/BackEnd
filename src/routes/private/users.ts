@@ -6,6 +6,22 @@ import Permissions from '../../constants/permissions.js'
 
 const usersRouter = new DocumentedRouter('/api/private')
 
+usersRouter.get(
+  '/students/applications',
+  {},
+  controller.getStudentApplications,
+  {},
+  authorize(Permissions.ReadStudentApplications),
+)
+
+usersRouter.get(
+  '/staff/applications',
+  {},
+  controller.getStaffApplications,
+  {},
+  authorize(Permissions.ReadStaffApplications),
+)
+
 usersRouter.patch(
   '/student/accept/:id',
   {
@@ -24,6 +40,22 @@ usersRouter.patch(
   controller.acceptStaff,
   {},
   authorize(Permissions.AcceptStaffApplications),
+)
+
+usersRouter.get(
+  '/students/accepted',
+  {},
+  controller.getAcceptedStudents,
+  {},
+  authorize(Permissions.ReadAcceptedStudents),
+)
+
+usersRouter.get(
+  '/staff/accepted',
+  {},
+  controller.getAcceptedStaff,
+  {},
+  authorize(Permissions.ReadAcceptedStaff),
 )
 
 export default usersRouter
