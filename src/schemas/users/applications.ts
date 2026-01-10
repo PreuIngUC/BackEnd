@@ -36,8 +36,22 @@ export const ApplicationAcceptanceBodyDto = StudentProfileSchema.pick({
   applicationState: true,
 })
 
-export const ApplicationAcceptanceParamsDto = UserSchema.pick({
-  id: true,
+export const StaffApplicationStateChangeParamsDto = z.object({
+  id: UserSchema.shape.id,
+  applicationState: StaffProfileSchema.shape.applicationState.extract([
+    'PENDING_AS_STAFF',
+    'ACCEPTED_AS_STAFF',
+    'REJECTED_AS_STAFF',
+  ]),
+})
+
+export const StudentApplicationStateChangeParamsDto = z.object({
+  id: UserSchema.shape.id,
+  applicationState: StudentProfileSchema.shape.applicationState.extract([
+    'PENDING_AS_STUDENT',
+    'ACCEPTED_AS_STUDENT',
+    'REJECTED_AS_STUDENT',
+  ]),
 })
 
 export const AccountsCreationStepParamsDto = z.object({
@@ -54,14 +68,26 @@ export const VerifyThenPasswordBodyDto = UserSchema.omit({
   createdAt: true,
 })
 
+export const GetApplicationParamsDto = UserSchema.pick({
+  id: true,
+})
+
 export type StaffApplicationDtoType = z.infer<typeof StaffApplicationDto>
 
 export type StudentApplicationDtoType = z.infer<typeof StudentApplicationDto>
 
 export type ApplicationAcceptanceBodyDtoType = z.infer<typeof ApplicationAcceptanceBodyDto>
 
-export type ApplicationAcceptanceParamsDtoType = z.infer<typeof ApplicationAcceptanceParamsDto>
+export type StaffApplicationStateChangeParamsDtoType = z.infer<
+  typeof StaffApplicationStateChangeParamsDto
+>
+
+export type StudentApplicationStateChangeParamsDtoType = z.infer<
+  typeof StudentApplicationStateChangeParamsDto
+>
 
 export type AccountsCreationStepParamsDtoType = z.infer<typeof AccountsCreationStepParamsDto>
 
 export type VerifyThenPasswordBodyDtoType = z.infer<typeof VerifyThenPasswordBodyDto>
+
+export type GetApplicationParamsDtoType = z.infer<typeof GetApplicationParamsDto>

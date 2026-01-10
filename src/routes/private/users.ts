@@ -1,8 +1,12 @@
 import DocumentedRouter from '../../infrastructure/openapi/documentedRouter.js'
 import * as controller from '../../controllers/users.js'
-import { ApplicationAcceptanceParamsDto } from '../../schemas/users/applications.js'
 import authorize from '../../middlewares/authorize.js'
 import Permissions from '../../constants/permissions.js'
+import {
+  GetApplicationParamsDto,
+  StaffApplicationStateChangeParamsDto,
+  StudentApplicationStateChangeParamsDto,
+} from '../../schemas/users/applications.js'
 
 const usersRouter = new DocumentedRouter('/api/private')
 
@@ -22,22 +26,42 @@ usersRouter.get(
   authorize(Permissions.ReadStaffApplications),
 )
 
-usersRouter.patch(
-  '/student/accept/:id',
+usersRouter.get(
+  '/student/application/:id',
   {
-    params: ApplicationAcceptanceParamsDto,
+    params: GetApplicationParamsDto,
   },
-  controller.acceptStudent,
+  controller.getStudentApplication,
+  {},
+  authorize(Permissions.ReadStudentApplications),
+)
+
+usersRouter.get(
+  '/staff/application/:id',
+  {
+    params: GetApplicationParamsDto,
+  },
+  controller.getStaffApplication,
+  {},
+  authorize(Permissions.ReadStaffApplications),
+)
+
+usersRouter.patch(
+  '/student/appstate/:applicationState/:id',
+  {
+    params: StudentApplicationStateChangeParamsDto,
+  },
+  controller.changeStudentApplicationState,
   {},
   authorize(Permissions.AcceptStudentApplications),
 )
 
 usersRouter.patch(
-  '/staff/accept/:id',
+  '/staff/appstate/:applicationState/:id',
   {
-    params: ApplicationAcceptanceParamsDto,
+    params: StaffApplicationStateChangeParamsDto,
   },
-  controller.acceptStaff,
+  controller.changeStaffApplicationState,
   {},
   authorize(Permissions.AcceptStaffApplications),
 )

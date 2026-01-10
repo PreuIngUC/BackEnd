@@ -2,7 +2,7 @@ import { JwtHeader, JwtPayload } from 'jsonwebtoken'
 import jwksRsa from 'jwks-rsa'
 import koaJwt from 'koa-jwt'
 import env from '../config/env.js'
-import { UnauthorizedError } from '../utils/errors/auth0.js'
+import { UnauthenticatedError } from '../utils/errors/auth0.js'
 
 //Buscador de Claves
 const jwksClient = jwksRsa({
@@ -15,7 +15,7 @@ const jwksClient = jwksRsa({
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function secretProvider(header: JwtHeader, payload: JwtPayload | string): Promise<string> {
   if (!header || !header.kid) {
-    throw new UnauthorizedError('Token malformado, falta "kid" en el header')
+    throw new UnauthenticatedError()
   }
   return new Promise((resolve, reject) => {
     jwksClient.getSigningKey(header.kid, (err, key) => {

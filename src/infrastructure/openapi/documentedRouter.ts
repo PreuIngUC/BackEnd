@@ -6,6 +6,7 @@ import { registry } from './openapi.js'
 import { Middleware } from 'koa'
 
 type InferOrUnknown<S> = S extends ZodType ? z.infer<S> : unknown
+type InferOrVoid<S> = S extends ZodType ? z.infer<S> : void
 
 class DocumentedRouter {
   private router
@@ -29,6 +30,7 @@ class DocumentedRouter {
     BodySchema extends ZodType | undefined,
     QuerySchema extends ZodType | undefined,
     ParamsSchema extends ZodType | undefined,
+    ResponseSchema extends ZodType | undefined,
   >(
     schemas: {
       body?: BodySchema
@@ -41,23 +43,24 @@ class DocumentedRouter {
         InferOrUnknown<QuerySchema>,
         InferOrUnknown<ParamsSchema>
       >,
-    ) => Promise<unknown>,
+    ) => Promise<InferOrVoid<ResponseSchema>>,
     params: {
       method: 'get' | 'post' | 'put' | 'patch' | 'delete'
       particularPath: string
     },
-    optionals: {
-      response?: {
-        status: number
-        schema: ZodType
-      }
+    response?: {
+      status: number
+      schema: ResponseSchema
+      description?: string
+    },
+    optionals?: {
       summary?: string
       tags?: string[]
     },
     authorizationMiddleware?: Middleware,
   ) {
     const { method, particularPath } = params
-    const { response, summary, tags } = optionals
+    const { summary, tags } = optionals ?? {}
     registry.registerPath({
       method,
       path: this.basePath + this.prefix + particularPath,
@@ -77,10 +80,10 @@ class DocumentedRouter {
             }
           : undefined,
       },
-      responses: response
+      responses: response?.schema
         ? {
             [response.status]: {
-              description: 'OK',
+              description: response.description ?? 'OK',
               content: {
                 'application/json': {
                   schema: response.schema,
@@ -94,19 +97,37 @@ class DocumentedRouter {
             },
           },
     })
-    if (!authorizationMiddleware)
-      this.router[method](particularPath, validateThenHandle(schemas, handler))
-    else
-      this.router[method](
-        particularPath,
-        authorizationMiddleware,
-        validateThenHandle(schemas, handler),
-      )
+
+    const wrappedHandler = async (
+      ctx: ValidatedContext<
+        InferOrUnknown<BodySchema>,
+        InferOrUnknown<QuerySchema>,
+        InferOrUnknown<ParamsSchema>
+      >,
+    ): Promise<void> => {
+      const result = await handler(ctx)
+
+      if (!response?.schema) {
+        ctx.status = 204
+        return
+      }
+
+      const parsed = response.schema.parse(result)
+
+      ctx.status = response.status
+      ctx.body = parsed
+    }
+
+    const koaHandler = validateThenHandle(schemas, wrappedHandler)
+
+    if (!authorizationMiddleware) this.router[method](particularPath, koaHandler)
+    else this.router[method](particularPath, authorizationMiddleware, koaHandler)
   }
   post<
     BodySchema extends ZodType | undefined,
     QuerySchema extends ZodType | undefined,
     ParamsSchema extends ZodType | undefined,
+    ResponseSchema extends ZodType | undefined,
   >(
     particularPath: string,
     schemas: {
@@ -120,12 +141,13 @@ class DocumentedRouter {
         InferOrUnknown<QuerySchema>,
         InferOrUnknown<ParamsSchema>
       >,
-    ) => Promise<unknown>,
+    ) => Promise<InferOrVoid<ResponseSchema>>,
+    response?: {
+      status: number
+      schema: ResponseSchema
+      description?: string
+    },
     optionals?: {
-      response?: {
-        status: number
-        schema: ZodType
-      }
       summary?: string
       tags?: string[]
     },
@@ -138,7 +160,8 @@ class DocumentedRouter {
         method: 'post',
         particularPath,
       },
-      optionals ?? {},
+      response,
+      optionals,
       authorizationMiddleware,
     )
   }
@@ -146,6 +169,7 @@ class DocumentedRouter {
     BodySchema extends ZodType | undefined,
     QuerySchema extends ZodType | undefined,
     ParamsSchema extends ZodType | undefined,
+    ResponseSchema extends ZodType | undefined,
   >(
     particularPath: string,
     schemas: {
@@ -159,12 +183,13 @@ class DocumentedRouter {
         InferOrUnknown<QuerySchema>,
         InferOrUnknown<ParamsSchema>
       >,
-    ) => Promise<unknown>,
+    ) => Promise<InferOrVoid<ResponseSchema>>,
+    response?: {
+      status: number
+      schema: ResponseSchema
+      description: string
+    },
     optionals?: {
-      response?: {
-        status: number
-        schema: ZodType
-      }
       summary?: string
       tags?: string[]
     },
@@ -177,7 +202,8 @@ class DocumentedRouter {
         method: 'get',
         particularPath,
       },
-      optionals ?? {},
+      response,
+      optionals,
       authorizationMiddleware,
     )
   }
@@ -185,6 +211,7 @@ class DocumentedRouter {
     BodySchema extends ZodType | undefined,
     QuerySchema extends ZodType | undefined,
     ParamsSchema extends ZodType | undefined,
+    ResponseSchema extends ZodType | undefined,
   >(
     particularPath: string,
     schemas: {
@@ -198,12 +225,12 @@ class DocumentedRouter {
         InferOrUnknown<QuerySchema>,
         InferOrUnknown<ParamsSchema>
       >,
-    ) => Promise<unknown>,
+    ) => Promise<InferOrVoid<ResponseSchema>>,
+    response?: {
+      status: number
+      schema: ResponseSchema
+    },
     optionals?: {
-      response?: {
-        status: number
-        schema: ZodType
-      }
       summary?: string
       tags?: string[]
     },
@@ -216,7 +243,8 @@ class DocumentedRouter {
         method: 'patch',
         particularPath,
       },
-      optionals ?? {},
+      response,
+      optionals,
       authorizationMiddleware,
     )
   }
@@ -224,6 +252,7 @@ class DocumentedRouter {
     BodySchema extends ZodType | undefined,
     QuerySchema extends ZodType | undefined,
     ParamsSchema extends ZodType | undefined,
+    ResponseSchema extends ZodType | undefined,
   >(
     particularPath: string,
     schemas: {
@@ -237,15 +266,16 @@ class DocumentedRouter {
         InferOrUnknown<QuerySchema>,
         InferOrUnknown<ParamsSchema>
       >,
-    ) => Promise<unknown>,
+    ) => Promise<InferOrVoid<ResponseSchema>>,
+    response?: {
+      status: number
+      schema: ResponseSchema
+    },
     optionals?: {
-      response?: {
-        status: number
-        schema: ZodType
-      }
       summary?: string
       tags?: string[]
     },
+    authorizationMiddleware?: Middleware,
   ) {
     this.documentedRoute(
       schemas,
@@ -254,13 +284,16 @@ class DocumentedRouter {
         method: 'put',
         particularPath,
       },
-      optionals ?? {},
+      response,
+      optionals,
+      authorizationMiddleware,
     )
   }
   delete<
     BodySchema extends ZodType | undefined,
     QuerySchema extends ZodType | undefined,
     ParamsSchema extends ZodType | undefined,
+    ResponseSchema extends ZodType | undefined,
   >(
     particularPath: string,
     schemas: {
@@ -274,15 +307,16 @@ class DocumentedRouter {
         InferOrUnknown<QuerySchema>,
         InferOrUnknown<ParamsSchema>
       >,
-    ) => Promise<unknown>,
+    ) => Promise<InferOrVoid<ResponseSchema>>,
+    response?: {
+      status: number
+      schema: ResponseSchema
+    },
     optionals?: {
-      response?: {
-        status: number
-        schema: ZodType
-      }
       summary?: string
       tags?: string[]
     },
+    authorizationMiddleware?: Middleware,
   ) {
     this.documentedRoute(
       schemas,
@@ -291,7 +325,9 @@ class DocumentedRouter {
         method: 'delete',
         particularPath,
       },
-      optionals ?? {},
+      response,
+      optionals,
+      authorizationMiddleware,
     )
   }
 }

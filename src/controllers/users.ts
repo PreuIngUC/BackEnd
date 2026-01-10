@@ -1,8 +1,10 @@
 import type { BodyContext, ParamsContext, VoidContext } from '../types/context.js'
 import type {
+  GetApplicationParamsDtoType,
   StaffApplicationDtoType,
+  StaffApplicationStateChangeParamsDtoType,
   StudentApplicationDtoType,
-  ApplicationAcceptanceParamsDtoType,
+  StudentApplicationStateChangeParamsDtoType,
   VerifyThenPasswordBodyDtoType,
 } from '../schemas/users/applications.js'
 import DbApi from '../services/dbApi.js'
@@ -61,14 +63,26 @@ async function getApplications(type: 'staff' | 'student') {
   const users = await userService.findMany({
     where: {
       [profile]: {
-        applicationState: type === 'staff' ? 'PENDING_AS_STAFF' : 'PENDING_AS_STUDENT',
+        applicationState: {
+          in:
+            type === 'staff'
+              ? ['PENDING_AS_STAFF', 'ACCEPTED_AS_STAFF']
+              : ['PENDING_AS_STUDENT', 'ACCEPTED_AS_STUDENT'],
+        },
       },
     },
     include: {
-      [profile]: true,
+      [profile]: {
+        select: {
+          applicationState: true,
+        },
+      },
     },
     omit: {
       auth0Id: true,
+      rut: true,
+      email: true,
+      createdAt: true,
     },
   })
   return users
@@ -90,17 +104,86 @@ export async function getStaffApplications(ctx: VoidContext) {
   }
 }
 
-export async function acceptStudent(ctx: ParamsContext<ApplicationAcceptanceParamsDtoType>) {
-  const userId = ctx.params.id
+export async function getApplication(type: 'staff' | 'student', id: string) {
+  const profile = type === 'staff' ? 'staffProfile' : 'studentProfile'
+  const states:
+    | StaffApplicationStateChangeParamsDtoType['applicationState'][]
+    | StudentApplicationStateChangeParamsDtoType['applicationState'][] =
+    type === 'staff'
+      ? ['PENDING_AS_STAFF', 'ACCEPTED_AS_STAFF', 'REJECTED_AS_STAFF']
+      : ['PENDING_AS_STUDENT', 'ACCEPTED_AS_STUDENT', 'REJECTED_AS_STUDENT']
+  return userService.findUnique({
+    where: {
+      id,
+      [profile]: {
+        applicationState: {
+          in: states,
+        },
+      },
+    },
+    include: {
+      [profile]: true,
+    },
+  })
+}
+
+export async function getStudentApplication(ctx: ParamsContext<GetApplicationParamsDtoType>) {
+  const { id } = ctx.params
+  const user = await getApplication('student', id)
+  if (!user) throw new Error('No existe esa postulación')
+  ctx.body = { user }
+  ctx.status = 200
+}
+
+export async function getStaffApplication(ctx: ParamsContext<GetApplicationParamsDtoType>) {
+  const { id } = ctx.params
+  const user = await getApplication('staff', id)
+  if (!user) throw new Error('No existe esa postulación')
+  ctx.body = { user }
+  ctx.status = 200
+}
+
+interface StudentApplicationStateChange {
+  from: StudentApplicationStateChangeParamsDtoType['applicationState']
+  to: StudentApplicationStateChangeParamsDtoType['applicationState']
+}
+
+const studentStateChangesAvailable: StudentApplicationStateChange[] = [
+  {
+    from: 'PENDING_AS_STUDENT',
+    to: 'ACCEPTED_AS_STUDENT',
+  },
+  {
+    from: 'PENDING_AS_STUDENT',
+    to: 'REJECTED_AS_STUDENT',
+  },
+  {
+    from: 'ACCEPTED_AS_STUDENT',
+    to: 'PENDING_AS_STUDENT',
+  },
+  {
+    from: 'REJECTED_AS_STUDENT',
+    to: 'PENDING_AS_STUDENT',
+  },
+]
+
+export async function changeStudentApplicationState(
+  ctx: ParamsContext<StudentApplicationStateChangeParamsDtoType>,
+) {
+  const { id, applicationState } = ctx.params
   const studentProfile = await studentProfileService.findFirst({
     where: {
-      userId,
+      userId: id,
     },
   })
   if (!studentProfile) {
     throw new ApplicationError('student', 'existance')
   }
-  if (studentProfile.applicationState !== 'PENDING_AS_STUDENT') {
+  if (
+    studentStateChangesAvailable.every(
+      sc => sc.from === studentProfile.applicationState && sc.to !== applicationState,
+    )
+  ) {
     throw new ApplicationError('student', 'status')
   }
   await studentProfileService.update({
@@ -108,23 +191,53 @@ export async function acceptStudent(ctx: ParamsContext<ApplicationAcceptancePara
       id: studentProfile.id,
     },
     data: {
-      applicationState: 'ACCEPTED_AS_STUDENT',
+      applicationState,
     },
   })
   ctx.status = 204
 }
 
-export async function acceptStaff(ctx: ParamsContext<ApplicationAcceptanceParamsDtoType>) {
-  const userId = ctx.params.id
+interface StaffApplicationStateChange {
+  from: StaffApplicationStateChangeParamsDtoType['applicationState']
+  to: StaffApplicationStateChangeParamsDtoType['applicationState']
+}
+
+const staffStateChangesAvailable: StaffApplicationStateChange[] = [
+  {
+    from: 'PENDING_AS_STAFF',
+    to: 'ACCEPTED_AS_STAFF',
+  },
+  {
+    from: 'PENDING_AS_STAFF',
+    to: 'REJECTED_AS_STAFF',
+  },
+  {
+    from: 'ACCEPTED_AS_STAFF',
+    to: 'PENDING_AS_STAFF',
+  },
+  {
+    from: 'REJECTED_AS_STAFF',
+    to: 'PENDING_AS_STAFF',
+  },
+]
+
+export async function changeStaffApplicationState(
+  ctx: ParamsContext<StaffApplicationStateChangeParamsDtoType>,
+) {
+  const { id, applicationState } = ctx.params
   const staffProfile = await staffProfileService.findFirst({
     where: {
-      userId,
+      userId: id,
     },
   })
   if (!staffProfile) {
     throw new ApplicationError('staff', 'existance')
   }
-  if (staffProfile.applicationState !== 'PENDING_AS_STAFF') {
+  if (
+    staffStateChangesAvailable.every(
+      sc => sc.from === staffProfile.applicationState && sc.to !== applicationState,
+    )
+  ) {
     throw new ApplicationError('staff', 'status')
   }
   await staffProfileService.update({
@@ -132,7 +245,7 @@ export async function acceptStaff(ctx: ParamsContext<ApplicationAcceptanceParams
       id: staffProfile.id,
     },
     data: {
-      applicationState: 'ACCEPTED_AS_STAFF',
+      applicationState,
     },
   })
   ctx.status = 204
@@ -175,6 +288,7 @@ export async function verifyThenChangePassword(ctx: BodyContext<VerifyThenPasswo
     select: {
       id: true,
       email: true,
+      auth0Id: true,
       staffProfile: {
         select: {
           applicationState: true,
@@ -187,8 +301,12 @@ export async function verifyThenChangePassword(ctx: BodyContext<VerifyThenPasswo
       },
     },
   })
-  if (!user) {
+  if (!user || !user.auth0Id) {
     throw new Error('Usuario no existe')
+  }
+  const { email_verified } = (await AuthApi.getInstance().getUser(user.auth0Id)).data
+  if (!email_verified) {
+    throw new Error('Este usuario no ha sido verificado todavía.')
   }
   if (!user.staffProfile && !user.studentProfile) {
     throw new Error('El usuario no tiene un perfil')

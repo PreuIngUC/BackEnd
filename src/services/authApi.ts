@@ -93,6 +93,20 @@ class AuthApi {
       throw err
     }
   }
+  private async get<R = unknown>(
+    route: string,
+    to: 'tokenApi' | 'managementApi' | 'dbConnectionsApi' = 'tokenApi',
+    contentType: boolean = false,
+  ): AxiosPromise<R> {
+    try {
+      return await this[to].get<R>(route, {
+        headers: await this.getCurrentHeader(contentType),
+      })
+    } catch (err) {
+      this.logAxiosError(err)
+      throw err
+    }
+  }
   async createAccount(email: string) {
     return this.post<unknown, Auth0CreateUserRes>(
       '/users',
@@ -126,6 +140,9 @@ class AuthApi {
       'dbConnectionsApi',
       true,
     )
+  }
+  async getUser(auth0Id: string) {
+    return this.get<{ email_verified: boolean }>(`/users/${auth0Id}`, 'managementApi')
   }
 }
 
