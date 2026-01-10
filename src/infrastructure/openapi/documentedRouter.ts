@@ -50,7 +50,7 @@ class DocumentedRouter {
     },
     response?: {
       status: number
-      schema: ResponseSchema
+      schema?: ResponseSchema
       description?: string
     },
     optionals?: {
@@ -91,11 +91,17 @@ class DocumentedRouter {
               },
             },
           }
-        : {
-            204: {
-              description: 'No Content',
+        : response?.status
+          ? {
+              [response.status]: {
+                description: 'No Content',
+              },
+            }
+          : {
+              204: {
+                description: 'No Content',
+              },
             },
-          },
     })
 
     const wrappedHandler = async (
@@ -107,8 +113,13 @@ class DocumentedRouter {
     ): Promise<void> => {
       const result = await handler(ctx)
 
-      if (!response?.schema) {
+      if (!response?.status) {
         ctx.status = 204
+        return
+      }
+
+      if (!response?.schema) {
+        ctx.status = response.status
         return
       }
 
@@ -144,7 +155,7 @@ class DocumentedRouter {
     ) => Promise<InferOrVoid<ResponseSchema>>,
     response?: {
       status: number
-      schema: ResponseSchema
+      schema?: ResponseSchema
       description?: string
     },
     optionals?: {
@@ -186,8 +197,8 @@ class DocumentedRouter {
     ) => Promise<InferOrVoid<ResponseSchema>>,
     response?: {
       status: number
-      schema: ResponseSchema
-      description: string
+      schema?: ResponseSchema
+      description?: string
     },
     optionals?: {
       summary?: string
@@ -228,7 +239,8 @@ class DocumentedRouter {
     ) => Promise<InferOrVoid<ResponseSchema>>,
     response?: {
       status: number
-      schema: ResponseSchema
+      schema?: ResponseSchema
+      description?: string
     },
     optionals?: {
       summary?: string
@@ -269,7 +281,8 @@ class DocumentedRouter {
     ) => Promise<InferOrVoid<ResponseSchema>>,
     response?: {
       status: number
-      schema: ResponseSchema
+      schema?: ResponseSchema
+      description?: string
     },
     optionals?: {
       summary?: string
@@ -310,7 +323,8 @@ class DocumentedRouter {
     ) => Promise<InferOrVoid<ResponseSchema>>,
     response?: {
       status: number
-      schema: ResponseSchema
+      schema?: ResponseSchema
+      description?: string
     },
     optionals?: {
       summary?: string

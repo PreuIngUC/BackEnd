@@ -10,6 +10,13 @@ import type {
 import DbApi from '../services/dbApi.js'
 import AuthApi from '../services/authApi.js'
 import { ApplicationError } from '../utils/errors/applications.js'
+import {
+  GetAcceptedUsersResDtoType,
+  GetStaffApplicationResDtoType,
+  GetStaffApplicationsResDtoType,
+  GetStudentApplicationResDtoType,
+  GetStudentApplicationsResDtoType,
+} from '../schemas/users/output/applications.js'
 
 const userService = DbApi.getInstance().user()
 const studentProfileService = DbApi.getInstance().studentProfile()
@@ -22,7 +29,7 @@ const staffProfileService = DbApi.getInstance().staffProfile()
 
 export async function createStaffApplication(ctx: BodyContext<StaffApplicationDtoType>) {
   const { user, staff } = ctx.request.body
-  const newUser = await userService.create({
+  await userService.create({
     data: {
       ...user,
       staffProfile: {
@@ -35,13 +42,11 @@ export async function createStaffApplication(ctx: BodyContext<StaffApplicationDt
       staffProfile: true,
     },
   })
-  ctx.status = 201
-  ctx.body = newUser
 }
 
 export async function createStudentApplication(ctx: BodyContext<StudentApplicationDtoType>) {
   const { user, student } = ctx.request.body
-  const newUser = await userService.create({
+  await userService.create({
     data: {
       ...user,
       studentProfile: {
@@ -54,11 +59,11 @@ export async function createStudentApplication(ctx: BodyContext<StudentApplicati
       studentProfile: true,
     },
   })
-  ctx.status = 201
-  ctx.body = newUser
 }
 
-async function getApplications(type: 'staff' | 'student') {
+async function getApplications<
+  R = GetStaffApplicationsResDtoType | GetStudentApplicationsResDtoType,
+>(type: 'staff' | 'student'): Promise<R> {
   const profile = type === 'staff' ? 'staffProfile' : 'studentProfile'
   const users = await userService.findMany({
     where: {
@@ -66,8 +71,8 @@ async function getApplications(type: 'staff' | 'student') {
         applicationState: {
           in:
             type === 'staff'
-              ? ['PENDING_AS_STAFF', 'ACCEPTED_AS_STAFF']
-              : ['PENDING_AS_STUDENT', 'ACCEPTED_AS_STUDENT'],
+              ? ['PENDING_AS_STAFF', 'ACCEPTED_AS_STAFF', 'REJECTED_AS_STAFF']
+              : ['PENDING_AS_STUDENT', 'ACCEPTED_AS_STUDENT', 'REJECTED_AS_STUDENT'],
         },
       },
     },
@@ -85,26 +90,24 @@ async function getApplications(type: 'staff' | 'student') {
       createdAt: true,
     },
   })
-  return users
+  return { users } as unknown as R
 }
 
-export async function getStudentApplications(ctx: VoidContext) {
-  const users = await getApplications('student')
-  ctx.status = 200
-  ctx.body = {
-    users,
-  }
+export async function getStudentApplications(
+  _ctx: VoidContext,
+): Promise<GetStudentApplicationsResDtoType> {
+  const res = await getApplications<GetStudentApplicationsResDtoType>('student')
+  return res
 }
 
-export async function getStaffApplications(ctx: VoidContext) {
-  const users = await getApplications('staff')
-  ctx.status = 200
-  ctx.body = {
-    users,
-  }
+export async function getStaffApplications(_ctx: VoidContext) {
+  const res = await getApplications<GetStaffApplicationsResDtoType>('staff')
+  return res
 }
 
-export async function getApplication(type: 'staff' | 'student', id: string) {
+export async function getApplication<
+  R = GetStudentApplicationResDtoType['user'] | GetStaffApplicationResDtoType['user'],
+>(type: 'staff' | 'student', id: string): Promise<R> {
   const profile = type === 'staff' ? 'staffProfile' : 'studentProfile'
   const states:
     | StaffApplicationStateChangeParamsDtoType['applicationState'][]
@@ -112,7 +115,7 @@ export async function getApplication(type: 'staff' | 'student', id: string) {
     type === 'staff'
       ? ['PENDING_AS_STAFF', 'ACCEPTED_AS_STAFF', 'REJECTED_AS_STAFF']
       : ['PENDING_AS_STUDENT', 'ACCEPTED_AS_STUDENT', 'REJECTED_AS_STUDENT']
-  return userService.findUnique({
+  const user = await userService.findUnique({
     where: {
       id,
       [profile]: {
@@ -125,22 +128,21 @@ export async function getApplication(type: 'staff' | 'student', id: string) {
       [profile]: true,
     },
   })
+  return user as R
 }
 
 export async function getStudentApplication(ctx: ParamsContext<GetApplicationParamsDtoType>) {
   const { id } = ctx.params
-  const user = await getApplication('student', id)
+  const user = await getApplication<GetStudentApplicationResDtoType['user']>('student', id)
   if (!user) throw new Error('No existe esa postulación')
-  ctx.body = { user }
-  ctx.status = 200
+  return { user }
 }
 
 export async function getStaffApplication(ctx: ParamsContext<GetApplicationParamsDtoType>) {
   const { id } = ctx.params
-  const user = await getApplication('staff', id)
+  const user = await getApplication<GetStaffApplicationResDtoType['user']>('staff', id)
   if (!user) throw new Error('No existe esa postulación')
-  ctx.body = { user }
-  ctx.status = 200
+  return { user }
 }
 
 interface StudentApplicationStateChange {
@@ -194,7 +196,6 @@ export async function changeStudentApplicationState(
       applicationState,
     },
   })
-  ctx.status = 204
 }
 
 interface StaffApplicationStateChange {
@@ -248,10 +249,11 @@ export async function changeStaffApplicationState(
       applicationState,
     },
   })
-  ctx.status = 204
 }
 
-async function getAcceptedUsers(type: 'staff' | 'student') {
+async function getAcceptedUsers(
+  type: 'staff' | 'student',
+): Promise<GetAcceptedUsersResDtoType['users']> {
   const profile = type === 'staff' ? 'staffProfile' : 'studentProfile'
   const users = userService.findMany({
     where: {
@@ -259,24 +261,24 @@ async function getAcceptedUsers(type: 'staff' | 'student') {
         applicationState: type === 'staff' ? 'ACCEPTED_AS_STAFF' : 'ACCEPTED_AS_STUDENT',
       },
     },
+    select: {
+      id: true,
+      names: true,
+      lastName0: true,
+      lastName1: true,
+    },
   })
   return users
 }
 
-export async function getAcceptedStudents(ctx: VoidContext) {
+export async function getAcceptedStudents(_ctx: VoidContext) {
   const users = await getAcceptedUsers('student')
-  ctx.status = 200
-  ctx.body = {
-    users,
-  }
+  return { users }
 }
 
-export async function getAcceptedStaff(ctx: VoidContext) {
+export async function getAcceptedStaff(_ctx: VoidContext) {
   const users = await getAcceptedUsers('staff')
-  ctx.status = 200
-  ctx.body = {
-    users,
-  }
+  return { users }
 }
 
 export async function verifyThenChangePassword(ctx: BodyContext<VerifyThenPasswordBodyDtoType>) {
@@ -340,5 +342,4 @@ export async function verifyThenChangePassword(ctx: BodyContext<VerifyThenPasswo
       },
     },
   })
-  ctx.status = 204
 }

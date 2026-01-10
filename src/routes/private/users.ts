@@ -7,6 +7,13 @@ import {
   StaffApplicationStateChangeParamsDto,
   StudentApplicationStateChangeParamsDto,
 } from '../../schemas/users/applications.js'
+import {
+  GetStudentApplicationsResDto,
+  GetStaffApplicationsResDto,
+  GetStudentApplicationResDto,
+  GetStaffApplicationResDto,
+  GetAcceptedUsersResDto,
+} from '../../schemas/users/output/applications.js'
 
 const usersRouter = new DocumentedRouter('/api/private')
 
@@ -14,6 +21,10 @@ usersRouter.get(
   '/students/applications',
   {},
   controller.getStudentApplications,
+  {
+    status: 200,
+    schema: GetStudentApplicationsResDto,
+  },
   {},
   authorize(Permissions.ReadStudentApplications),
 )
@@ -22,6 +33,10 @@ usersRouter.get(
   '/staff/applications',
   {},
   controller.getStaffApplications,
+  {
+    status: 200,
+    schema: GetStaffApplicationsResDto,
+  },
   {},
   authorize(Permissions.ReadStaffApplications),
 )
@@ -32,6 +47,10 @@ usersRouter.get(
     params: GetApplicationParamsDto,
   },
   controller.getStudentApplication,
+  {
+    status: 200,
+    schema: GetStudentApplicationResDto,
+  },
   {},
   authorize(Permissions.ReadStudentApplications),
 )
@@ -42,6 +61,10 @@ usersRouter.get(
     params: GetApplicationParamsDto,
   },
   controller.getStaffApplication,
+  {
+    status: 200,
+    schema: GetStaffApplicationResDto,
+  },
   {},
   authorize(Permissions.ReadStaffApplications),
 )
@@ -52,7 +75,8 @@ usersRouter.patch(
     params: StudentApplicationStateChangeParamsDto,
   },
   controller.changeStudentApplicationState,
-  {},
+  undefined,
+  undefined,
   authorize(Permissions.AcceptStudentApplications),
 )
 
@@ -62,7 +86,8 @@ usersRouter.patch(
     params: StaffApplicationStateChangeParamsDto,
   },
   controller.changeStaffApplicationState,
-  {},
+  undefined,
+  undefined,
   authorize(Permissions.AcceptStaffApplications),
 )
 
@@ -70,7 +95,11 @@ usersRouter.get(
   '/students/accepted',
   {},
   controller.getAcceptedStudents,
-  {},
+  {
+    status: 200,
+    schema: GetAcceptedUsersResDto,
+  },
+  undefined,
   authorize(Permissions.ReadAcceptedStudents),
 )
 
@@ -78,7 +107,11 @@ usersRouter.get(
   '/staff/accepted',
   {},
   controller.getAcceptedStaff,
-  {},
+  {
+    status: 200,
+    schema: GetAcceptedUsersResDto,
+  },
+  undefined,
   authorize(Permissions.ReadAcceptedStaff),
 )
 

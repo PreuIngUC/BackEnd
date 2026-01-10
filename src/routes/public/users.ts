@@ -12,12 +12,18 @@ usersRouter.post(
   '/staff/application',
   { body: StaffApplicationDto },
   controller.createStaffApplication,
+  {
+    status: 201,
+  },
 )
 
 usersRouter.post(
   '/student/application',
   { body: StudentApplicationDto },
   controller.createStudentApplication,
+  {
+    status: 201,
+  },
 )
 
 usersRouter.patch(

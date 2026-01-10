@@ -4,6 +4,11 @@ import RoleId from '../constants/roles.js'
 import AuthApi from '../services/authApi.js'
 import DbApi from '../services/dbApi.js'
 import axios from 'axios'
+import {
+  AccountsCreationStepResDtoType,
+  ReadJobsStatusResDtoType,
+  StartAccountsCreationResDtoType,
+} from '../schemas/users/output/applications.js'
 
 const userService = DbApi.getInstance().user()
 const creationJobService = DbApi.getInstance().creationJob()
@@ -11,7 +16,10 @@ const creationJobItemService = DbApi.getInstance().creationJobItem()
 
 //NOTE: si tuvieramos volúmenes muy grandes (cientos) de estudiantes aceptados,
 // sería mejor crear jobs con pocos estudiantes (agregar take al buscar los estudiantes)
-async function startAccountsCreation(ctx: VoidContext, type: 'staff' | 'student') {
+async function startAccountsCreation(
+  ctx: VoidContext,
+  type: 'staff' | 'student',
+): Promise<StartAccountsCreationResDtoType> {
   const profile = type === 'staff' ? 'staffProfile' : 'studentProfile'
   const applicationState = type === 'staff' ? 'ACCEPTED_AS_STAFF' : 'ACCEPTED_AS_STUDENT'
   const target = type === 'staff' ? 'STAFF' : 'STUDENTS'
@@ -66,8 +74,7 @@ async function startAccountsCreation(ctx: VoidContext, type: 'staff' | 'student'
       })
       return job.id
     })
-  ctx.status = 201
-  ctx.body = { jobId: result }
+  return { jobId: result }
 }
 
 export async function startStudentsCreation(ctx: VoidContext) {
@@ -114,7 +121,7 @@ const usersPerStep = 10
 async function accountsCreationStep(
   ctx: ParamsContext<AccountsCreationStepParamsDtoType>,
   type: 'staff' | 'student',
-) {
+): Promise<AccountsCreationStepResDtoType> {
   const jobId = ctx.params.jobId
   await jobVerifyForAccCreation(jobId, type)
   const users = await userService.findMany({
@@ -196,49 +203,47 @@ async function accountsCreationStep(
       })
       haveErrors++
     }
-    if (created + haveErrors < usersPerStep) {
-      const total = await creationJobItemService.count({
+  }
+  if (created + haveErrors < usersPerStep) {
+    const total = await creationJobItemService.count({
+      where: {
+        jobId,
+      },
+    })
+    const done = await creationJobItemService.count({
+      where: {
+        jobId,
+        status: 'DONE',
+      },
+    })
+    const done_with_errors = await creationJobItemService.count({
+      where: {
+        jobId,
+        status: 'DONE_WITH_ERRORS',
+      },
+    })
+    if (done + done_with_errors >= total && done_with_errors > 0) {
+      await creationJobService.update({
         where: {
-          jobId,
+          id: jobId,
         },
-      })
-      const done = await creationJobItemService.count({
-        where: {
-          jobId,
-          status: 'DONE',
-        },
-      })
-      const done_with_errors = await creationJobItemService.count({
-        where: {
-          jobId,
+        data: {
           status: 'DONE_WITH_ERRORS',
         },
       })
-      if (done + done_with_errors >= total && done_with_errors > 0) {
-        await creationJobService.update({
-          where: {
-            id: jobId,
-          },
-          data: {
-            status: 'DONE_WITH_ERRORS',
-          },
-        })
-      } else if (done + done_with_errors >= total) {
-        await creationJobService.update({
-          where: {
-            id: jobId,
-          },
-          data: {
-            status: 'DONE',
-          },
-        })
-      }
-      ctx.status = 201
-      ctx.body = { created, haveErrors, stepsAvailable: false }
+    } else if (done + done_with_errors >= total) {
+      await creationJobService.update({
+        where: {
+          id: jobId,
+        },
+        data: {
+          status: 'DONE',
+        },
+      })
     }
-    ctx.status = 201
-    ctx.body = { created, haveErrors, stepsAvailable: true }
+    return { created, haveErrors, stepsAvailable: false }
   }
+  return { created, haveErrors, stepsAvailable: true }
 }
 
 export async function studentsCreationStep(ctx: ParamsContext<AccountsCreationStepParamsDtoType>) {
@@ -249,7 +254,9 @@ export async function staffCreationStep(ctx: ParamsContext<AccountsCreationStepP
   return accountsCreationStep(ctx, 'staff')
 }
 
-export async function readJobStatus(ctx: ParamsContext<AccountsCreationStepParamsDtoType>) {
+export async function readJobStatus(
+  ctx: ParamsContext<AccountsCreationStepParamsDtoType>,
+): Promise<ReadJobsStatusResDtoType> {
   const jobId = ctx.params.jobId
   const status = (
     await creationJobService.findUnique({
@@ -264,6 +271,5 @@ export async function readJobStatus(ctx: ParamsContext<AccountsCreationStepParam
   if (!status) {
     throw new Error('No existe ese job')
   }
-  ctx.status = 200
-  ctx.body = { status }
+  return { status }
 }
