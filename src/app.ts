@@ -19,7 +19,7 @@ const allowedOrigins: (string | RegExp)[] = [
 ]
 
 if (env.ITS_PROD || env.ITS_PREV) {
-  console.log('CORS en PROD o PREV')
+  console.log('CORS en PRODUCTION o PREVIEW')
   app.use(
     cors({
       origin: ctx => {
