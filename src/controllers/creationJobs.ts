@@ -1,0 +1,275 @@
+import { VoidContext, ParamsContext } from '../types/context.js'
+import { AccountsCreationStepParamsDtoType } from '../schemas/users/applications.js'
+import RoleId from '../constants/roles.js'
+import AuthApi from '../services/authApi.js'
+import DbApi from '../services/dbApi.js'
+import axios from 'axios'
+import {
+  AccountsCreationStepResDtoType,
+  ReadJobsStatusResDtoType,
+  StartAccountsCreationResDtoType,
+} from '../schemas/users/output/applications.js'
+
+const userService = DbApi.getInstance().user()
+const creationJobService = DbApi.getInstance().creationJob()
+const creationJobItemService = DbApi.getInstance().creationJobItem()
+
+//NOTE: si tuvieramos volúmenes muy grandes (cientos) de estudiantes aceptados,
+// sería mejor crear jobs con pocos estudiantes (agregar take al buscar los estudiantes)
+async function startAccountsCreation(
+  ctx: VoidContext,
+  type: 'staff' | 'student',
+): Promise<StartAccountsCreationResDtoType> {
+  const profile = type === 'staff' ? 'staffProfile' : 'studentProfile'
+  const applicationState = type === 'staff' ? 'ACCEPTED_AS_STAFF' : 'ACCEPTED_AS_STUDENT'
+  const target = type === 'staff' ? 'STAFF' : 'STUDENTS'
+  const result = await DbApi.getInstance()
+    .getPrisma()
+    .$transaction(async tx => {
+      const users = await tx.user.findMany({
+        where: {
+          auth0Id: null,
+          [profile]: {
+            applicationState,
+          },
+          creationJobItem: {
+            none: {
+              status: {
+                in: ['PENDING', 'RUNNING'],
+              },
+            },
+          },
+        },
+        select: {
+          id: true,
+        },
+      })
+      if (users.length <= 0) {
+        throw new Error('No hay postulantes sin cuenta')
+      }
+      const creator = await tx.user.findUnique({
+        where: {
+          auth0Id: ctx.state.user?.sub,
+        },
+      })
+      if (!creator) {
+        throw new Error('El usuario que envió la solicitud no existe en la DB')
+      }
+      const job = await tx.creationJob.create({
+        data: {
+          creatorId: creator.id,
+          target,
+          status: 'PENDING',
+        },
+      })
+      await tx.creationJobItem.createMany({
+        data: users.map(u => {
+          return {
+            userId: u.id,
+            jobId: job.id,
+            status: 'PENDING',
+            target,
+          }
+        }),
+      })
+      return job.id
+    })
+  return { jobId: result }
+}
+
+export async function startStudentsCreation(ctx: VoidContext) {
+  return startAccountsCreation(ctx, 'student')
+}
+
+export async function startStaffCreation(ctx: VoidContext) {
+  return startAccountsCreation(ctx, 'staff')
+}
+
+async function jobVerifyForAccCreation(jobId: string, type: 'staff' | 'student') {
+  const job = await creationJobService.findUnique({
+    where: {
+      id: jobId,
+    },
+    select: {
+      status: true,
+      target: true,
+    },
+  })
+  if (!job) {
+    throw new Error('El job dado no existe')
+  }
+  if (
+    (job.target === 'STAFF' && type !== 'staff') ||
+    (job.target === 'STUDENTS' && type !== 'student')
+  ) {
+    throw new Error('El job entregado no es para el rol indicado')
+  }
+  if (job.status === 'PENDING') {
+    await creationJobService.update({
+      where: {
+        id: jobId,
+      },
+      data: {
+        status: 'RUNNING',
+      },
+    })
+  }
+}
+
+const usersPerStep = 10
+
+async function accountsCreationStep(
+  ctx: ParamsContext<AccountsCreationStepParamsDtoType>,
+  type: 'staff' | 'student',
+): Promise<AccountsCreationStepResDtoType> {
+  const jobId = ctx.params.jobId
+  await jobVerifyForAccCreation(jobId, type)
+  const users = await userService.findMany({
+    where: {
+      auth0Id: null,
+      creationJobItem: {
+        some: {
+          jobId,
+          status: 'PENDING',
+        },
+      },
+    },
+    take: usersPerStep,
+  })
+  const api = AuthApi.getInstance()
+  const profile = type === 'staff' ? 'staffProfile' : 'studentProfile'
+  let created = 0
+  let haveErrors = 0
+  for (const u of users) {
+    try {
+      const user = await api.createAccount(u.email)
+      await userService.update({
+        where: {
+          id: u.id,
+        },
+        data: {
+          auth0Id: user.data.user_id,
+          creationJobItem: {
+            updateMany: {
+              where: {
+                jobId,
+              },
+              data: {
+                status: 'DONE',
+              },
+            },
+          },
+          [profile]: {
+            update: {
+              applicationState: 'CREATED',
+            },
+          },
+        },
+      })
+      await api.assignRoles(user.data.user_id, [RoleId[type]])
+      created++
+    } catch (err) {
+      let errString
+      if (axios.isAxiosError(err)) {
+        errString = JSON.stringify(
+          {
+            message: err.message,
+            status: err.response?.status,
+            data: err.response?.data,
+          },
+          null,
+          2,
+        )
+      } else {
+        errString = JSON.stringify(err, Object.getOwnPropertyNames(err))
+      }
+      await userService.update({
+        where: {
+          id: u.id,
+        },
+        data: {
+          creationJobItem: {
+            updateMany: {
+              where: {
+                jobId,
+              },
+              data: {
+                status: 'DONE_WITH_ERRORS',
+                error: errString,
+              },
+            },
+          },
+        },
+      })
+      haveErrors++
+    }
+  }
+  if (created + haveErrors < usersPerStep) {
+    const total = await creationJobItemService.count({
+      where: {
+        jobId,
+      },
+    })
+    const done = await creationJobItemService.count({
+      where: {
+        jobId,
+        status: 'DONE',
+      },
+    })
+    const done_with_errors = await creationJobItemService.count({
+      where: {
+        jobId,
+        status: 'DONE_WITH_ERRORS',
+      },
+    })
+    if (done + done_with_errors >= total && done_with_errors > 0) {
+      await creationJobService.update({
+        where: {
+          id: jobId,
+        },
+        data: {
+          status: 'DONE_WITH_ERRORS',
+        },
+      })
+    } else if (done + done_with_errors >= total) {
+      await creationJobService.update({
+        where: {
+          id: jobId,
+        },
+        data: {
+          status: 'DONE',
+        },
+      })
+    }
+    return { created, haveErrors, stepsAvailable: false }
+  }
+  return { created, haveErrors, stepsAvailable: true }
+}
+
+export async function studentsCreationStep(ctx: ParamsContext<AccountsCreationStepParamsDtoType>) {
+  return accountsCreationStep(ctx, 'student')
+}
+
+export async function staffCreationStep(ctx: ParamsContext<AccountsCreationStepParamsDtoType>) {
+  return accountsCreationStep(ctx, 'staff')
+}
+
+export async function readJobStatus(
+  ctx: ParamsContext<AccountsCreationStepParamsDtoType>,
+): Promise<ReadJobsStatusResDtoType> {
+  const jobId = ctx.params.jobId
+  const status = (
+    await creationJobService.findUnique({
+      where: {
+        id: jobId,
+      },
+      select: {
+        status: true,
+      },
+    })
+  )?.status
+  if (!status) {
+    throw new Error('No existe ese job')
+  }
+  return { status }
+}

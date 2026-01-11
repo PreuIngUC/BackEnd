@@ -1,5 +1,7 @@
 import axios, { AxiosError, AxiosPromise } from 'axios'
 import env from '../config/env.js'
+import generateStrongPassword from '../utils/generateStrongPassword.js'
+import RoleId from '../constants/roles.js'
 
 interface Auth0TokenData {
   access_token: string
@@ -7,13 +9,21 @@ interface Auth0TokenData {
   token_type: string
 }
 
+interface Auth0CreateUserRes {
+  user_id: string
+}
+
 class AuthApi {
-  private api
+  private tokenApi
+  private managementApi
+  private dbConnectionsApi
   private static instance: AuthApi
   private auth0Token: string
   private expiresAt: number
   private constructor() {
-    this.api = axios.create({ baseURL: env.AUTH0_API_URL })
+    this.tokenApi = axios.create({ baseURL: env.AUTH0_TOKEN_URL })
+    this.managementApi = axios.create({ baseURL: env.AUTH0_MANAGEMENT_URL })
+    this.dbConnectionsApi = axios.create({ baseURL: env.AUTH0_DB_CONNECTIONS_URL })
     this.auth0Token = ''
     this.expiresAt = 0
   }
@@ -27,7 +37,7 @@ class AuthApi {
   }
   private async fetchToken(): AxiosPromise<Auth0TokenData> {
     try {
-      return this.api.post<Auth0TokenData>(
+      return this.tokenApi.post<Auth0TokenData>(
         '/',
         {
           client_id: env.AUTH0_CLIENT_ID,
@@ -53,9 +63,10 @@ class AuthApi {
     this.expiresAt = Date.now() + data.expires_in * 1000
     return this.auth0Token
   }
-  private async getCurrentHeader() {
+  private async getCurrentHeader(contentType: boolean = false) {
     return {
       Authorization: `Bearer ${await this.getToken()}`,
+      'content-type': contentType ? 'application/json' : undefined,
     }
   }
   static getInstance(): AuthApi {
@@ -67,13 +78,71 @@ class AuthApi {
     const inst = AuthApi.getInstance()
     await inst.getToken()
   }
-  private async post<T, R = unknown>(route: string, data: T): AxiosPromise<R> {
+  private async post<T, R = unknown>(
+    route: string,
+    data: T,
+    to: 'tokenApi' | 'managementApi' | 'dbConnectionsApi' = 'tokenApi',
+    contentType: boolean = false,
+  ): AxiosPromise<R> {
     try {
-      return await this.api.post<R>(route, data, { headers: await this.getCurrentHeader() })
+      return await this[to].post<R>(route, data, {
+        headers: await this.getCurrentHeader(contentType),
+      })
     } catch (err) {
       this.logAxiosError(err)
       throw err
     }
+  }
+  private async get<R = unknown>(
+    route: string,
+    to: 'tokenApi' | 'managementApi' | 'dbConnectionsApi' = 'tokenApi',
+    contentType: boolean = false,
+  ): AxiosPromise<R> {
+    try {
+      return await this[to].get<R>(route, {
+        headers: await this.getCurrentHeader(contentType),
+      })
+    } catch (err) {
+      this.logAxiosError(err)
+      throw err
+    }
+  }
+  async createAccount(email: string) {
+    return this.post<unknown, Auth0CreateUserRes>(
+      '/users',
+      {
+        connection: 'Username-Password-Authentication',
+        email,
+        password: generateStrongPassword(),
+        email_verified: false,
+        verify_email: true,
+      },
+      'managementApi',
+    )
+  }
+  async assignRoles(auth0Id: string, roleIds: RoleId[]) {
+    return this.post(
+      `/users/${auth0Id}/roles`,
+      {
+        roles: roleIds,
+      },
+      'managementApi',
+    )
+  }
+  async triggerPassWordChange(email: string) {
+    return this.post(
+      '/change_password',
+      {
+        client_id: env.AUTH0_PUBLIC_CLIENT_ID,
+        email,
+        connection: 'Username-Password-Authentication',
+      },
+      'dbConnectionsApi',
+      true,
+    )
+  }
+  async getUser(auth0Id: string) {
+    return this.get<{ email_verified: boolean }>(`/users/${auth0Id}`, 'managementApi')
   }
 }
 

@@ -1,5 +1,5 @@
 {
-  "name": "adsumback",
+  "name": "preuingucback",
   "version": "1.0.0",
   "description": "Backend de Adsum, una aplicación para pasar lista en el PreuIng.",
   "main": "dist/index.js",
@@ -12,7 +12,12 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "postinstall": "npx prisma generate"
+    "postinstall": "npm run prisma:generate",
+    "prisma:generate": "npx prisma generate",
+    "postprisma:generate": "npm run fix:zod_imports",
+    "fix:zod_imports": "node scripts/fix-esm-zod-imports.mjs",
+    "postfix:zod_imports": "npm run fix:zod_exports",
+    "fix:zod_exports": "node scripts/fix-esm-zod-exports.mjs"
   },
   "repository": {
     "type": "git",
@@ -25,6 +30,7 @@
   },
   "homepage": "https://github.com/PreuIngUC/AdsumBack#readme",
   "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^8.2.0",
     "@koa/cors": "^5.0.0",
     "@koa/router": "^14.0.0",
     "@prisma/adapter-pg": "^7.1.0",
@@ -36,7 +42,8 @@
     "koa": "^3.0.3",
     "koa-bodyparser": "^4.4.1",
     "koa-jwt": "^4.0.4",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "zod": "^4.2.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",
@@ -56,7 +63,8 @@
     "prisma": "^7.1.0",
     "tsx": "^4.20.6",
     "typescript": "^5.4.5",
-    "typescript-eslint": "^8.46.2"
+    "typescript-eslint": "^8.46.2",
+    "zod-prisma-types": "^3.3.10"
   },
   "type": "module"
 }

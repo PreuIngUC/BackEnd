@@ -1,0 +1,10 @@
+{
+  "buildCommand": "npx prisma migrate deploy && npm run build",
+  "outputDirectory": ".",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api/[...path]"
+    }
+  ]
+}

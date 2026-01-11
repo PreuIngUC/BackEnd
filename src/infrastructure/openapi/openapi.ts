@@ -1,0 +1,21 @@
+import { z } from 'zod'
+import {
+  OpenAPIRegistry,
+  OpenApiGeneratorV3,
+  extendZodWithOpenApi,
+} from '@asteasolutions/zod-to-openapi'
+
+extendZodWithOpenApi(z)
+
+export const registry = new OpenAPIRegistry()
+
+export function buildOpenApi() {
+  const generator = new OpenApiGeneratorV3(registry.definitions)
+  return generator.generateDocument({
+    openapi: '3.0.0',
+    info: {
+      title: 'PreuIngUC Backend API',
+      version: '1.0.0',
+    },
+  })
+}
