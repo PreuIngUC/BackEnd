@@ -22,6 +22,12 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Pronouns {
+  EL_LO
+  ELLA_LA
+  ELLE_LE
+}
+
 model User {
   id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
   auth0Id String? @unique @map("auth0_id")
@@ -31,6 +37,11 @@ model User {
   lastName1 String @map("last_name1") /// @zod.string.min(2).trim()
   email String @unique /// @zod.string.email().toLowerCase()
   createdAt DateTime @default(now()) @map("created_at")
+
+  pronouns Pronouns
+  birthDate DateTime @db.Date
+  phoneNumber String @unique /// @zod.string.trim().regex(/^\+\d{11}$/, { message: "El teléfono debe ser + seguido de 11 dígitos (ej: +56912345678)" })
+
   userRoles UserRole[]
   courseEnrolments CourseEnrolment[]
   sectionEnrolments SectionEnrolment[]
@@ -63,10 +74,86 @@ model StaffProfile {
   @@map("staff_profiles")
 }
 
+enum EducationalLevel {
+  PRIMERO_MEDIO
+  SEGUNDO_MEDIO
+  TERCERO_MEDIO
+  CUARTO_MEDIO
+  EGRESADO
+}
+
+enum SchoolType {
+  CIENTIFICO_HUMANISTA
+  TECNICO_PROFESIONAL
+  ARTISTICO
+}
+
+enum SchoolDependency {
+  MUNICIPAL
+  SUBVENCIONADO_O_ADMINISTRACION_DELEGADA
+  PARTICULAR_PAGADO
+}
+
+enum ElectiveTest {
+  BIOLOGIA
+  FISICA
+  QUIMICA
+  HISTORIA
+  TECNICO
+}
+
+enum TakesM2 {
+  SI
+  NO
+  AUN_NO_SE
+}
+
+enum RSHSection {
+  FROM_0_TO_40
+  FROM_41_TO_50
+  FROM_51_TO_60
+  FROM_61_TO_70
+  FROM_71_TO_80
+  FROM_81_TO_90
+  FROM_91_TO_100
+  DOESNT_HAVE
+}
+
 model StudentProfile {
   id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
   userId String @map("user_id") @db.Uuid @unique /// @zod.string.uuid()
   applicationState ApplicationState @default(PENDING_AS_STUDENT) @map("application_state")
+
+  educationalLevel EducationalLevel
+  school String
+  schoolType SchoolType
+  schoolDependency SchoolDependency
+  residence String /// @zod.string.trim().min(1, { message: "La comuna de residencia no puede estar vacía ni contener solo espacios." })
+  electiveTest ElectiveTest
+  takesM2 TakesM2
+  targetProgram String /// @zod.string.trim().min(1, { message: "La carrera no puede estar vacía ni contener solo espacios." })
+  targetUniversity String /// @zod.string.trim().min(1, { message: "La universidad no puede estar vacía ni contener solo espacios." })
+  goalsAndPlans String //Objetivos y planes con el preu
+
+  scheduleDifficulties String?
+
+  avg1M Decimal @db.Decimal(2, 1) /// @zod.custom.use(z.number().min(0.0).max(7.0))
+  avg2M Decimal @db.Decimal(2, 1) /// @zod.custom.use(z.number().min(0.0).max(7.0))
+  avg3M Decimal @db.Decimal(2, 1) /// @zod.custom.use(z.number().min(0.0).max(7.0))
+  avg4M Decimal @db.Decimal(2, 1) /// @zod.custom.use(z.number().min(0.0).max(7.0))
+
+  rshSection RSHSection
+
+  familySize Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo"})
+  totalMonthlyIncome Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyFoodExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyEducationExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyUtilitiesExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyTelecomExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyTransportationExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyHousingExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyHealthcareExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyMiscExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
 
   user User @relation(fields: [userId], references: [id])
 
