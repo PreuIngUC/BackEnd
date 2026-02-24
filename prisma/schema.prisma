@@ -137,10 +137,10 @@ model StudentProfile {
 
   scheduleDifficulties String?
 
-  avg1M Decimal @db.Decimal(2, 1) /// @zod.custom.use(z.number().min(1.0).max(7.0))
-  avg2M Decimal @db.Decimal(2, 1) /// @zod.custom.use(z.number().min(1.0).max(7.0))
-  avg3M Decimal @db.Decimal(2, 1) /// @zod.custom.use(z.number().min(1.0).max(7.0))
-  avg4M Decimal @db.Decimal(2, 1) /// @zod.custom.use(z.number().min(1.0).max(7.0))
+  avg1M Decimal @db.Decimal(2, 1) /// @zod.custom.use(z.number().min(0.0).max(7.0))
+  avg2M Decimal @db.Decimal(2, 1) /// @zod.custom.use(z.number().min(0.0).max(7.0))
+  avg3M Decimal @db.Decimal(2, 1) /// @zod.custom.use(z.number().min(0.0).max(7.0))
+  avg4M Decimal @db.Decimal(2, 1) /// @zod.custom.use(z.number().min(0.0).max(7.0))
 
   rshSection RSHSection
 
