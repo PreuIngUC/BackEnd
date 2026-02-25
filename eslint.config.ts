@@ -24,8 +24,8 @@ export default defineConfig([
   // (Combina tu "Bloque 1" y "Bloque 2", eliminando React)
   {
     files: [
-        'src/**/*.{ts,js}', // <- Tu código fuente del backend
-        '*.config.ts'       // <- Tus archivos de config (como este)
+      'src/**/*.{ts,js}', // <- Tu código fuente del backend
+      '*.config.ts', // <- Tus archivos de config (como este)
     ],
     extends: [
       js.configs.recommended,
@@ -39,6 +39,14 @@ export default defineConfig([
     rules: {
       // Mantenemos tu regla de 'no-explicit-any'
       '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
 
       // El resto de reglas de formato (max-len, semi, indent)
       // se las dejamos a Prettier.

@@ -4,46 +4,177 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
+// Al hacer cambios ejecutar:
+// npx prisma migrate dev --name nombre_del_cambio
+// para migracion y cambio de tipos en TypeScript
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
+}
+
+generator zod {
+  provider         = "zod-prisma-types"
+  output           = "../src/generated/zod" 
+  useMultipleFiles = true 
+  prismaClientImportPath = "@prisma/client"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
+enum Pronouns {
+  EL_LO
+  ELLA_LA
+  ELLE_LE
+}
+
 model User {
-  id String @id @default(uuid()) @db.Uuid
-  auth0Id String @unique @map("auth0_id")
-  rut String @unique
-  names String
-  lastName0 String @map("last_name0")
-  lastName1 String @map("last_name1")
-  email String @unique
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
+  auth0Id String? @unique @map("auth0_id")
+  rut String @unique /// @zod.string.trim().toUpperCase().regex(/^\d{7,8}-[\dK]$/, { message: "Formato inválido" })
+  names String /// @zod.string.min(2).trim()
+  lastName0 String @map("last_name0") /// @zod.string.min(2).trim()
+  lastName1 String @map("last_name1") /// @zod.string.min(2).trim()
+  email String @unique /// @zod.string.email().toLowerCase()
   createdAt DateTime @default(now()) @map("created_at")
+
+  pronouns Pronouns
+  birthDate DateTime @db.Date
+  phoneNumber String @unique /// @zod.string.trim().regex(/^\+\d{11}$/, { message: "El teléfono debe ser + seguido de 11 dígitos (ej: +56912345678)" })
+
   userRoles UserRole[]
-  courseEnrollements CourseEnrollement[]
-  sectionEnrollements SectionEnrollement[]
+  courseEnrolments CourseEnrolment[]
+  sectionEnrolments SectionEnrolment[]
   attendances Attendance[]
+  staffProfile StaffProfile?
+  studentProfile StudentProfile?
+  creationJob CreationJob[]
+  creationJobItem CreationJobItem[]
   @@map("users")
 }
 
+enum ApplicationState {
+  PENDING_AS_STUDENT
+  PENDING_AS_STAFF
+  ACCEPTED_AS_STUDENT
+  ACCEPTED_AS_STAFF
+  CREATED
+  REJECTED_AS_STAFF
+  REJECTED_AS_STUDENT
+  ACTIVE
+}
+
+model StaffProfile {
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
+  userId String @map("user_id") @db.Uuid @unique
+  applicationState ApplicationState @default(PENDING_AS_STAFF) @map("application_state")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("staff_profiles")
+}
+
+enum EducationalLevel {
+  PRIMERO_MEDIO
+  SEGUNDO_MEDIO
+  TERCERO_MEDIO
+  CUARTO_MEDIO
+  EGRESADO
+}
+
+enum SchoolType {
+  CIENTIFICO_HUMANISTA
+  TECNICO_PROFESIONAL
+  ARTISTICO
+}
+
+enum SchoolDependency {
+  MUNICIPAL
+  SUBVENCIONADO_O_ADMINISTRACION_DELEGADA
+  PARTICULAR_PAGADO
+}
+
+enum ElectiveTest {
+  BIOLOGIA
+  FISICA
+  QUIMICA
+  HISTORIA
+  TECNICO
+}
+
+enum TakesM2 {
+  SI
+  NO
+  AUN_NO_SE
+}
+
+enum RSHSection {
+  FROM_0_TO_40
+  FROM_41_TO_50
+  FROM_51_TO_60
+  FROM_61_TO_70
+  FROM_71_TO_80
+  FROM_81_TO_90
+  FROM_91_TO_100
+  DOESNT_HAVE
+}
+
+model StudentProfile {
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
+  userId String @map("user_id") @db.Uuid @unique /// @zod.string.uuid()
+  applicationState ApplicationState @default(PENDING_AS_STUDENT) @map("application_state")
+
+  educationalLevel EducationalLevel
+  school String
+  schoolType SchoolType
+  schoolDependency SchoolDependency
+  residence String /// @zod.string.trim().min(1, { message: "La comuna de residencia no puede estar vacía ni contener solo espacios." })
+  electiveTest ElectiveTest
+  takesM2 TakesM2
+  targetProgram String /// @zod.string.trim().min(1, { message: "La carrera no puede estar vacía ni contener solo espacios." })
+  targetUniversity String /// @zod.string.trim().min(1, { message: "La universidad no puede estar vacía ni contener solo espacios." })
+  goalsAndPlans String //Objetivos y planes con el preu
+
+  scheduleDifficulties String?
+
+  avg1M Decimal @db.Decimal(2, 1) /// @zod.custom.use(z.number().min(0.0).max(7.0))
+  avg2M Decimal @db.Decimal(2, 1) /// @zod.custom.use(z.number().min(0.0).max(7.0))
+  avg3M Decimal @db.Decimal(2, 1) /// @zod.custom.use(z.number().min(0.0).max(7.0))
+  avg4M Decimal @db.Decimal(2, 1) /// @zod.custom.use(z.number().min(0.0).max(7.0))
+
+  rshSection RSHSection
+
+  familySize Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo"})
+  totalMonthlyIncome Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyFoodExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyEducationExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyUtilitiesExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyTelecomExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyTransportationExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyHousingExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyHealthcareExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyMiscExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("student_profiles")
+}
+
 model Role {
-  id String @id @default(uuid()) @db.Uuid
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
   label String @unique
 
   userRoles UserRole[]
 
-  courseEnrollements CourseEnrollement[]
-  sectionEnrollements SectionEnrollement[]
+  courseEnrolments CourseEnrolment[]
+  sectionEnrolments SectionEnrolment[]
   
   @@map("roles")
 }
 
 model UserRole {
-  userId String @map("user_id") @db.Uuid
-  roleId String @map("role_id") @db.Uuid
+  userId String @map("user_id") @db.Uuid /// @zod.string.uuid()
+  roleId String @map("role_id") @db.Uuid /// @zod.string.uuid()
 
   user User @relation(fields: [userId], references: [id])
   role Role @relation(fields: [roleId], references: [id])
@@ -53,59 +184,60 @@ model UserRole {
 }
 
 model Course {
-  id String @id @default(uuid()) @db.Uuid
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
   name String
 
   sections Section[]
-  courseEnrollements CourseEnrollement[]
+  courseEnrolments CourseEnrolment[]
 
   @@map("courses")
 }
 
-model CourseEnrollement {
-  id String @id @default(uuid()) @db.Uuid
-  userId String @map("user_id") @db.Uuid
-  roleId String @map("role_id") @db.Uuid
-  courseId String @map("course_id") @db.Uuid
+model CourseEnrolment {
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
+  userId String @map("user_id") @db.Uuid /// @zod.string.uuid()
+  roleId String @map("role_id") @db.Uuid /// @zod.string.uuid()
+  courseId String @map("course_id") @db.Uuid /// @zod.string.uuid()
 
   user User @relation(fields: [userId], references: [id])
   role Role @relation(fields: [roleId], references: [id])
   course Course @relation(fields: [courseId], references: [id])
 
-  @@map("course_enrollements")
+  @@map("course_enrolments")
 }
 
 model Section {
-  id String @id @default(uuid()) @db.Uuid
-  courseId String @map("course_id") @db.Uuid
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
+  courseId String @map("course_id") @db.Uuid /// @zod.string.uuid()
 
   course Course @relation(fields: [courseId], references: [id])
-  sectionEnrollements SectionEnrollement[]
+  sectionEnrolments SectionEnrolment[]
   schedules Schedule[]
   events Event[]
 
   @@map("sections")
 }
 
-model SectionEnrollement {
-  id String @id @default(uuid()) @db.Uuid
-  userId String @map("user_id") @db.Uuid
-  roleId String @map("role_id") @db.Uuid
-  sectionId String @map("section_id") @db.Uuid
+model SectionEnrolment {
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
+  userId String @map("user_id") @db.Uuid /// @zod.string.uuid()
+  roleId String @map("role_id") @db.Uuid /// @zod.string.uuid()
+  sectionId String @map("section_id") @db.Uuid /// @zod.string.uuid()
 
   user User @relation(fields: [userId], references: [id])
   role Role @relation(fields: [roleId], references: [id])
-  course Section @relation(fields: [sectionId], references: [id])
+  section Section @relation(fields: [sectionId], references: [id])
 
-  @@map("section_enrollements")
+  @@map("section_enrolments")
 }
 
 model Schedule {
-  id String @id @default(uuid()) @db.Uuid
-  sectionId String @map("section_id") @db.Uuid
-  day Int //domingo -> 0, lunes -> 1...
-  startTime Int @map("start_time") //minutos desde media noche [0, 1439]
-  endTime Int @map("end_time") //minutos desde media noche...
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
+  sectionId String @map("section_id") @db.Uuid /// @zod.string.uuid()
+  day Int /// @zod.number.int().min(0).max(6, { message: "Día debe ser entre 0 y 6" })
+  // Minutos desde la medianoche:
+  startTime Int @map("start_time") /// @zod.number.int().min(0).max(1439)
+  endTime Int @map("end_time") /// @zod.number.int().min(0).max(1439)
 
   section Section @relation(fields: [sectionId], references: [id])
 
@@ -113,8 +245,8 @@ model Schedule {
 }
 
 model Event {
-  id String @id @default(uuid()) @db.Uuid
-  sectionId String @map("section_id") @db.Uuid
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
+  sectionId String @map("section_id") @db.Uuid /// @zod.string.uuid()
   startDateTime DateTime @map("start_date_time")
   endDateTime DateTime @map("end_date_time")
 
@@ -125,13 +257,53 @@ model Event {
 }
 
 model Attendance {
-  id String @id @default(uuid()) @db.Uuid
-  userId String @map("user_id") @db.Uuid
-  eventId String @map("event_id") @db.Uuid
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
+  userId String @map("user_id") @db.Uuid /// @zod.string.uuid()
+  eventId String @map("event_id") @db.Uuid /// @zod.string.uuid()
 
   user User @relation(fields: [userId], references: [id])
   event Event @relation(fields: [eventId], references: [id])
 
   @@unique([userId, eventId])
   @@map("attendances")
+}
+
+enum CreationJobTarget {
+  STUDENTS
+  STAFF
+}
+
+enum CreationJobStatus {
+  PENDING
+  RUNNING
+  DONE
+  DONE_WITH_ERRORS
+}
+
+model CreationJob {
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
+  creatorId String @map("creator_id") @db.Uuid /// @zod.string.uuid()
+  target CreationJobTarget
+  status CreationJobStatus
+  createdAt DateTime @default(now())
+
+  creator User @relation(fields: [creatorId], references: [id])
+  item CreationJobItem[]
+
+  @@map("creation_jobs")
+}
+
+model CreationJobItem {
+  id String @id @default(uuid()) @db.Uuid
+  jobId String @map("job_id") @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  status CreationJobStatus
+  target CreationJobTarget
+  error String?
+
+  job CreationJob @relation(fields: [jobId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([jobId, userId, target])
+  @@map("creation_job_items")
 }
