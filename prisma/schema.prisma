@@ -145,15 +145,15 @@ model StudentProfile {
   rshSection RSHSection
 
   familySize Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo"})
-  totalMonthlyIncome Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
-  monthlyFoodExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
-  monthlyEducationExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
-  monthlyUtilitiesExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
-  monthlyTelecomExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
-  monthlyTransportationExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
-  monthlyHousingExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
-  monthlyHealthcareExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
-  monthlyMiscExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  totalMonthlyIncome Int /// @zod.number.int().nonnegative({ message: "Debe ser un valor positivo" })
+  monthlyFoodExpenses Int /// @zod.number.int().nonnegative({ message: "Debe ser un valor positivo" })
+  monthlyEducationExpenses Int /// @zod.number.int().nonnegative({ message: "Debe ser un valor positivo" })
+  monthlyUtilitiesExpenses Int /// @zod.number.int().nonnegative({ message: "Debe ser un valor positivo" })
+  monthlyTelecomExpenses Int /// @zod.number.int().nonnegative({ message: "Debe ser un valor positivo" })
+  monthlyTransportationExpenses Int /// @zod.number.int().nonnegative({ message: "Debe ser un valor positivo" })
+  monthlyHousingExpenses Int /// @zod.number.int().nonnegative({ message: "Debe ser un valor positivo" })
+  monthlyHealthcareExpenses Int /// @zod.number.int().nonnegative({ message: "Debe ser un valor positivo" })
+  monthlyMiscExpenses Int /// @zod.number.int().nonnegative({ message: "Debe ser un valor positivo" })
 
   user User @relation(fields: [userId], references: [id])
 
