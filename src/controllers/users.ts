@@ -1,5 +1,6 @@
-import type { BodyContext, ParamsContext, VoidContext } from '../types/context.js'
+import type { BodyAndParamsContext, BodyContext, ParamsContext, VoidContext } from '../types/context.js'
 import type {
+  EditStudentApplicationDtoType,
   GetApplicationParamsDtoType,
   StaffApplicationDtoType,
   StaffApplicationStateChangeParamsDtoType,
@@ -17,6 +18,7 @@ import {
   GetStudentApplicationResDtoType,
   GetStudentApplicationsResDtoType,
 } from '../schemas/users/output/applications.js'
+import { Prisma } from '@prisma/client'
 
 const userService = DbApi.getInstance().user()
 const studentProfileService = DbApi.getInstance().studentProfile()
@@ -61,6 +63,27 @@ export async function createStudentApplication(ctx: BodyContext<StudentApplicati
   })
 }
 
+export async function editStudentApplication(ctx: BodyAndParamsContext<StudentApplicationDtoType, EditStudentApplicationDtoType>) {
+  const { user, student } = ctx.request.body
+  const { id } = ctx.params
+  await userService.update({
+    where: {
+      id
+    },
+    data: {
+      ...user,
+      studentProfile: {
+        update: {
+          ...student,
+        },
+      },
+    },
+    include: {
+      studentProfile: true,
+    },
+  })
+}
+
 async function getApplications<
   R = GetStaffApplicationsResDtoType | GetStudentApplicationsResDtoType,
 >(type: 'staff' | 'student'): Promise<R> {
@@ -85,7 +108,6 @@ async function getApplications<
     },
     omit: {
       auth0Id: true,
-      rut: true,
       email: true,
       createdAt: true,
     },
@@ -133,14 +155,27 @@ export async function getApplication<
 
 export async function getStudentApplication(ctx: ParamsContext<GetApplicationParamsDtoType>) {
   const { id } = ctx.params
-  const user = await getApplication<GetStudentApplicationResDtoType['user']>('student', id)
-  if (!user) throw new Error('No existe esa postulación')
-  return { user }
+  const pUser = await getApplication<Prisma.UserGetPayload<{ include: { studentProfile: true } }>>('student', id)
+  if (!pUser || !pUser.studentProfile) throw new Error('No existe esa postulación')
+  const { avg1M, avg2M, avg3M, avg4M } = pUser.studentProfile
+  const response: GetStudentApplicationResDtoType = {
+    user: {
+      ...pUser,
+      studentProfile: {
+        ...pUser.studentProfile,
+        avg1M: avg1M.toNumber(),
+        avg2M: avg2M.toNumber(),
+        avg3M: avg3M.toNumber(),
+        avg4M: avg4M.toNumber(),
+      }
+    }
+  }
+  return response
 }
 
 export async function getStaffApplication(ctx: ParamsContext<GetApplicationParamsDtoType>) {
-  const { id } = ctx.params
-  const user = await getApplication<GetStaffApplicationResDtoType['user']>('staff', id)
+  const { rut } = ctx.params
+  const user = await getApplication<GetStaffApplicationResDtoType['user']>('staff', rut)
   if (!user) throw new Error('No existe esa postulación')
   return { user }
 }
@@ -262,7 +297,7 @@ async function getAcceptedUsers(
       },
     },
     select: {
-      id: true,
+      rut: true,
       names: true,
       lastName0: true,
       lastName1: true,

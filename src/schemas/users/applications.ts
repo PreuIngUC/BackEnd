@@ -32,6 +32,10 @@ export const StudentApplicationDto = z.object({
   student: StudentInput,
 })
 
+export const EditStudentApplicationDto = z.object({
+  id: UserSchema.shape.id
+})
+
 export const ApplicationAcceptanceBodyDto = StudentProfileSchema.pick({
   applicationState: true,
 })
@@ -91,3 +95,5 @@ export type AccountsCreationStepParamsDtoType = z.infer<typeof AccountsCreationS
 export type VerifyThenPasswordBodyDtoType = z.infer<typeof VerifyThenPasswordBodyDto>
 
 export type GetApplicationParamsDtoType = z.infer<typeof GetApplicationParamsDto>
+
+export type EditStudentApplicationDtoType = z.infer<typeof EditStudentApplicationDto>

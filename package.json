@@ -1,6 +1,6 @@
 {
   "name": "preuingucback",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Backend de Adsum, una aplicación para pasar lista en el PreuIng.",
   "main": "dist/index.js",
   "scripts": {

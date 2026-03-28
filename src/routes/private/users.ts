@@ -6,6 +6,8 @@ import {
   GetApplicationParamsDto,
   StaffApplicationStateChangeParamsDto,
   StudentApplicationStateChangeParamsDto,
+  StudentApplicationDto,
+  EditStudentApplicationDto
 } from '../../schemas/users/applications.js'
 import {
   GetStudentApplicationsResDto,
@@ -89,6 +91,18 @@ usersRouter.patch(
   undefined,
   undefined,
   authorize(Permissions.AcceptStaffApplications),
+)
+
+usersRouter.patch(
+  '/student/application/:id',
+  { 
+    params: EditStudentApplicationDto,
+    body: StudentApplicationDto
+  },
+  controller.editStudentApplication,
+  undefined,
+  undefined,
+  authorize(Permissions.EditStudentApplications)
 )
 
 usersRouter.get(
