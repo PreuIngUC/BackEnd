@@ -122,7 +122,7 @@ export async function getStudentApplications(
   return res
 }
 
-export async function getStaffApplications(_ctx: VoidContext) {
+export async function getStaffApplications(_ctx: VoidContext): Promise<GetStaffApplicationsResDtoType> {
   const res = await getApplications<GetStaffApplicationsResDtoType>('staff')
   return res
 }
@@ -297,6 +297,7 @@ async function getAcceptedUsers(
       },
     },
     select: {
+      id: true,
       rut: true,
       names: true,
       lastName0: true,
