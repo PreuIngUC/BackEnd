@@ -8,6 +8,7 @@ import {
 
 const StudentAndApplicationStateDto = UserSchema.pick({
   id: true,
+  rut: true,
   names: true,
   lastName0: true,
   lastName1: true,
@@ -27,6 +28,7 @@ export const GetStudentApplicationsResDto = z.object({
 
 const StaffAndApplicationStateDto = UserSchema.pick({
   id: true,
+  rut: true,
   names: true,
   lastName0: true,
   lastName1: true,
@@ -66,6 +68,7 @@ export const GetAcceptedUsersResDto = z.object({
   users: z.array(
     UserSchema.pick({
       id: true,
+      rut: true,
       names: true,
       lastName0: true,
       lastName1: true,
