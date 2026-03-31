@@ -116,7 +116,7 @@ async function jobVerifyForAccCreation(jobId: string, type: 'staff' | 'student')
   }
 }
 
-const usersPerStep = 10
+const usersPerStep = 2
 
 async function accountsCreationStep(
   ctx: ParamsContext<AccountsCreationStepParamsDtoType>,
