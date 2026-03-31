@@ -70,6 +70,9 @@ export const VerifyThenPasswordBodyDto = UserSchema.omit({
   lastName1: true,
   email: true,
   createdAt: true,
+  pronouns: true,
+  birthDate: true,
+  phoneNumber: true,
 })
 
 export const GetApplicationParamsDto = UserSchema.pick({
