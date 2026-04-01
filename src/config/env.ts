@@ -32,9 +32,10 @@ const env = {
   AUTH0_MANAGEMENT_URL: `${get('AUTH0_DOMAIN')}/api/v2`,
   AUTH0_TOKEN_URL: `${get('AUTH0_DOMAIN')}/oauth/token`,
   AUTH0_DB_CONNECTIONS_URL: `${get('AUTH0_DOMAIN')}/dbconnections`,
-  AUTH0_JWKS_URI: `${get('AUTH0_DOMAIN')}/.well-known/jwks.json`,
+  AUTH0_JWKS_URI: `${get('AUTH0_CUSTOM_DOMAIN')}/.well-known/jwks.json`,
   AUTH0_ADSUM_AUDIENCE: `${get('AUTH0_ADSUM_AUDIENCE')}`,
   AUTH0_PUBLIC_CLIENT_ID: get('AUTH0_PUBLIC_CLIENT_ID'),
+  AUTH0_CUSTOM_DOMAIN: get('AUTH0_CUSTOM_DOMAIN'),
   //strings Neon
   DATABASE_URL: `${get('DATABASE_URL')}`,
   DATABASE_URL_UNPOOLED: `${get('DATABASE_URL_UNPOOLED')}`,

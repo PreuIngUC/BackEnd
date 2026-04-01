@@ -31,7 +31,7 @@ function secretProvider(header: JwtHeader, payload: JwtPayload | string): Promis
 const authMiddleware = koaJwt({
   secret: secretProvider,
   audience: env.AUTH0_ADSUM_AUDIENCE,
-  issuer: `${env.AUTH0_DOMAIN}/`,
+  issuer: `${env.AUTH0_CUSTOM_DOMAIN}/`,
   algorithms: ['RS256'],
   passthrough: false,
 })
