@@ -186,6 +186,8 @@ model UserRole {
 model Course {
   id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
   name String
+  open Boolean
+  finished Boolean
 
   sections Section[]
   courseEnrolments CourseEnrolment[]
@@ -251,9 +253,20 @@ model Event {
   endDateTime DateTime @map("end_date_time")
 
   section Section @relation(fields: [sectionId], references: [id])
+  eventTokens EventToken[]
   attendances Attendance[]
 
   @@map("events")
+}
+
+model EventToken {
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
+  eventId String @map("event_id") @db.Uuid /// @zod.string.uuid()
+  timeStamp Int @map("time_stamp") /// @zod.number.int().min(0)
+
+  event Event @relation(fields: [eventId], references: [id])
+
+  @@map("event_tokens")
 }
 
 model Attendance {
