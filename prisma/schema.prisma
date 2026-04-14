@@ -39,8 +39,8 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
 
   pronouns Pronouns
-  birthDate DateTime @db.Date
-  phoneNumber String @unique /// @zod.string.trim().regex(/^\+\d{11}$/, { message: "El teléfono debe ser + seguido de 11 dígitos (ej: +56912345678)" })
+  birthDate DateTime @db.Date @map("birth_date")
+  phoneNumber String @unique @map("phone_number") /// @zod.string.trim().regex(/^\+\d{11}$/, { message: "El teléfono debe ser + seguido de 11 dígitos (ej: +56912345678)" })
 
   userRoles UserRole[]
   courseEnrolments CourseEnrolment[]
@@ -124,36 +124,36 @@ model StudentProfile {
   userId String @map("user_id") @db.Uuid @unique /// @zod.string.uuid()
   applicationState ApplicationState @default(PENDING_AS_STUDENT) @map("application_state")
 
-  educationalLevel EducationalLevel
+  educationalLevel EducationalLevel @map("educational_level")
   school String
-  schoolType SchoolType
-  schoolDependency SchoolDependency
+  schoolType SchoolType @map("school_type")
+  schoolDependency SchoolDependency @map("school_dependency")
   residence String /// @zod.string.trim().min(1, { message: "La comuna de residencia no puede estar vacía ni contener solo espacios." })
-  electiveTest ElectiveTest
-  takesM2 TakesM2
-  targetProgram String /// @zod.string.trim().min(1, { message: "La carrera no puede estar vacía ni contener solo espacios." })
-  targetUniversity String /// @zod.string.trim().min(1, { message: "La universidad no puede estar vacía ni contener solo espacios." })
-  goalsAndPlans String //Objetivos y planes con el preu
+  electiveTest ElectiveTest @map("elective_test")
+  takesM2 TakesM2 @map("takes_m2")
+  targetProgram String @map("target_program") /// @zod.string.trim().min(1, { message: "La carrera no puede estar vacía ni contener solo espacios." })
+  targetUniversity String @map("target_university") /// @zod.string.trim().min(1, { message: "La universidad no puede estar vacía ni contener solo espacios." })
+  goalsAndPlans String @map("goals_and_plans") //Objetivos y planes con el preu
 
-  scheduleDifficulties String?
+  scheduleDifficulties String? @map("schedule_difficulties")
 
-  avg1M Decimal @db.Decimal(2, 1) /// @zod.custom.use(z.number().min(0.0).max(7.0))
-  avg2M Decimal @db.Decimal(2, 1) /// @zod.custom.use(z.number().min(0.0).max(7.0))
-  avg3M Decimal @db.Decimal(2, 1) /// @zod.custom.use(z.number().min(0.0).max(7.0))
-  avg4M Decimal @db.Decimal(2, 1) /// @zod.custom.use(z.number().min(0.0).max(7.0))
+  avg1M Decimal @db.Decimal(2, 1) @map("avg_1m") /// @zod.custom.use(z.number().min(0.0).max(7.0))
+  avg2M Decimal @db.Decimal(2, 1) @map("avg_2m")/// @zod.custom.use(z.number().min(0.0).max(7.0))
+  avg3M Decimal @db.Decimal(2, 1) @map("avg_3m") /// @zod.custom.use(z.number().min(0.0).max(7.0))
+  avg4M Decimal @db.Decimal(2, 1) @map("avg_4m") /// @zod.custom.use(z.number().min(0.0).max(7.0))
 
-  rshSection RSHSection
+  rshSection RSHSection @map("rsh_section")
 
-  familySize Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo"})
-  totalMonthlyIncome Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
-  monthlyFoodExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
-  monthlyEducationExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
-  monthlyUtilitiesExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
-  monthlyTelecomExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
-  monthlyTransportationExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
-  monthlyHousingExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
-  monthlyHealthcareExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
-  monthlyMiscExpenses Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  familySize Int @map("family_size") /// @zod.number.int().positive({ message: "Debe ser un valor positivo"})
+  totalMonthlyIncome Int @map("total_monthly_income") /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyFoodExpenses Int @map("monthly_food_expenses") /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyEducationExpenses Int @map("monthly_education_expenses") /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyUtilitiesExpenses Int @map("monthly_utilities_expenses") /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyTelecomExpenses Int @map("monthly_telecom_expenses") /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyTransportationExpenses Int @map("monthly_transportation_expenses") /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyHousingExpenses Int @map("monthly_housing_expenses") /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyHealthcareExpenses Int @map("monthly_healthcare_expenses") /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyMiscExpenses Int @map("monthly_misc_expenses") /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
 
   user User @relation(fields: [userId], references: [id])
 
@@ -285,7 +285,7 @@ model CreationJob {
   creatorId String @map("creator_id") @db.Uuid /// @zod.string.uuid()
   target CreationJobTarget
   status CreationJobStatus
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
 
   creator User @relation(fields: [creatorId], references: [id])
   item CreationJobItem[]
