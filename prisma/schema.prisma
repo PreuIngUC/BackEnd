@@ -196,6 +196,8 @@ model CourseEnrolment {
 
   role CourseEnrolmentRole
   createdAt DateTime @default(now()) @map("created_at")
+  startDate DateTime @db.Date @map("start_date")
+  endDate DateTime @db.Date @map("end_date")
 
   user User @relation(fields: [userId], references: [id])
   course Course @relation(fields: [courseId], references: [id])
@@ -227,6 +229,8 @@ model SectionEnrolment {
   sectionId String @map("section_id") @db.Uuid /// @zod.string.uuid()
   role SectionEnrolmentRole
   createdAt DateTime @default(now()) @map("created_at")
+  startDate DateTime @db.Date @map("start_date")
+  endDate DateTime @db.Date @map("end_date")
 
   user User @relation(fields: [userId], references: [id])
   section Section @relation(fields: [sectionId], references: [id])
