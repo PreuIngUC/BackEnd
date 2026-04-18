@@ -42,7 +42,6 @@ model User {
   birthDate DateTime @db.Date @map("birth_date")
   phoneNumber String @unique @map("phone_number") /// @zod.string.trim().regex(/^\+\d{11}$/, { message: "El teléfono debe ser + seguido de 11 dígitos (ej: +56912345678)" })
 
-  userRoles UserRole[]
   courseEnrolments CourseEnrolment[]
   sectionEnrolments SectionEnrolment[]
   attendances Attendance[]
@@ -64,10 +63,20 @@ enum ApplicationState {
   ACTIVE
 }
 
+enum StaffApplicationsRole {
+  COORDINATOR
+  TEACHER
+}
+
 model StaffProfile {
   id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
   userId String @map("user_id") @db.Uuid @unique
   applicationState ApplicationState @default(PENDING_AS_STAFF) @map("application_state")
+
+  program String
+  university String
+  entryYear Int @map("entry_year")
+  role StaffApplicationsRole
 
   user User @relation(fields: [userId], references: [id])
 
@@ -160,34 +169,14 @@ model StudentProfile {
   @@map("student_profiles")
 }
 
-model Role {
-  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
-  label String @unique
-
-  userRoles UserRole[]
-
-  courseEnrolments CourseEnrolment[]
-  sectionEnrolments SectionEnrolment[]
-  
-  @@map("roles")
-}
-
-model UserRole {
-  userId String @map("user_id") @db.Uuid /// @zod.string.uuid()
-  roleId String @map("role_id") @db.Uuid /// @zod.string.uuid()
-
-  user User @relation(fields: [userId], references: [id])
-  role Role @relation(fields: [roleId], references: [id])
-
-  @@id([userId, roleId])
-  @@map("user_roles")
-}
-
 model Course {
   id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
   name String
   open Boolean
   finished Boolean
+  startDate DateTime @db.Date @map("start_date")
+  endDate DateTime @db.Date @map("end_date")
+  createdAt DateTime @default(now()) @map("created_at")
 
   sections Section[]
   courseEnrolments CourseEnrolment[]
@@ -195,14 +184,20 @@ model Course {
   @@map("courses")
 }
 
+enum CourseEnrolmentRole {
+  COORDINATOR
+  TEACHER
+}
+
 model CourseEnrolment {
   id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
   userId String @map("user_id") @db.Uuid /// @zod.string.uuid()
-  roleId String @map("role_id") @db.Uuid /// @zod.string.uuid()
   courseId String @map("course_id") @db.Uuid /// @zod.string.uuid()
 
+  role CourseEnrolmentRole
+  createdAt DateTime @default(now()) @map("created_at")
+
   user User @relation(fields: [userId], references: [id])
-  role Role @relation(fields: [roleId], references: [id])
   course Course @relation(fields: [courseId], references: [id])
 
   @@map("course_enrolments")
@@ -211,6 +206,7 @@ model CourseEnrolment {
 model Section {
   id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
   courseId String @map("course_id") @db.Uuid /// @zod.string.uuid()
+  createdAt DateTime @default(now()) @map("created_at")
 
   course Course @relation(fields: [courseId], references: [id])
   sectionEnrolments SectionEnrolment[]
@@ -220,14 +216,19 @@ model Section {
   @@map("sections")
 }
 
+enum SectionEnrolmentRole {
+  TEACHER
+  STUDENT
+}
+
 model SectionEnrolment {
   id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
   userId String @map("user_id") @db.Uuid /// @zod.string.uuid()
-  roleId String @map("role_id") @db.Uuid /// @zod.string.uuid()
   sectionId String @map("section_id") @db.Uuid /// @zod.string.uuid()
+  role SectionEnrolmentRole
+  createdAt DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id])
-  role Role @relation(fields: [roleId], references: [id])
   section Section @relation(fields: [sectionId], references: [id])
 
   @@map("section_enrolments")
@@ -240,6 +241,7 @@ model Schedule {
   // Minutos desde la medianoche:
   startTime Int @map("start_time") /// @zod.number.int().min(0).max(1439)
   endTime Int @map("end_time") /// @zod.number.int().min(0).max(1439)
+  classRoom String @map("class_room")
 
   section Section @relation(fields: [sectionId], references: [id])
 
@@ -273,6 +275,7 @@ model Attendance {
   id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
   userId String @map("user_id") @db.Uuid /// @zod.string.uuid()
   eventId String @map("event_id") @db.Uuid /// @zod.string.uuid()
+  createdAt DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id])
   event Event @relation(fields: [eventId], references: [id])
