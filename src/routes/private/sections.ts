@@ -97,3 +97,5 @@ sectionsRouter.post(
   },
   authorize(Permissions.CreateSectionEnrolments),
 )
+
+export default sectionsRouter
