@@ -1,34 +1,31 @@
 import { z } from 'zod'
-import { CourseSchema, CourseEnrolmentSchema, SectionSchema, SectionEnrolmentSchema } from '../../generated/zod/index.js'
+import { CourseSchema, CourseEnrolmentSchema } from '../../generated/zod/index.js'
 
 export const CreateCourseDto = CourseSchema.omit({
-    id: true,
-    createdAt: true
+  id: true,
+  createdAt: true,
 })
 
 export const GetCourseParamsDto = CourseSchema.pick({
-    id: true
+  id: true,
 })
 
 export const CreateCourseEnrolmentDto = CourseEnrolmentSchema.omit({
-    id: true,
-    createdAt: true
+  id: true,
+  createdAt: true,
 })
 
-export const CreateSectionDto = SectionSchema.omit({
-    id: true,
-    createdAt: true
-})
+export const EditCourseBodyDto = CourseSchema.omit({
+  id: true,
+  createdAt: true,
+}).partial()
 
-export const CreateSectionEnrolmentDto = SectionEnrolmentSchema.omit({
-    id: true,
-    createdAt: true
+export const EditCourseParamsDto = z.object({
+  id: CourseSchema.shape.id,
 })
 
 export type CreateCourseDtoType = z.infer<typeof CreateCourseDto>
 export type CreateCourseEnrolmentDtoType = z.infer<typeof CreateCourseEnrolmentDto>
-export type CreateSectionDtoType = z.infer<typeof CreateSectionDto>
-export type CreateSectionEnrolmentDtoType = z.infer<typeof CreateSectionEnrolmentDto>
 export type GetCourseParamsDtoType = z.infer<typeof GetCourseParamsDto>
-
-
+export type EditCourseBodyDtoType = z.infer<typeof EditCourseBodyDto>
+export type EditCourseParamsDtoType = z.infer<typeof EditCourseParamsDto>

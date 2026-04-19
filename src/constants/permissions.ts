@@ -9,7 +9,11 @@ enum Permissions {
   CreateStudentUsers = 'create:student_users',
   CreateStaffUsers = 'create:staff_users',
   ReadJobsStatus = 'read:jobs_status',
-  EditStudentApplications = 'edit:student_applications'
+  EditStudentApplications = 'edit:student_applications',
+  CreateCourses = 'create:courses',
+  ReadCourses = 'read:courses',
+  EditCourses = 'edit:courses',
+  CreateCourseEnrolments = 'create:course_enrolments',
 }
 
 export default Permissions

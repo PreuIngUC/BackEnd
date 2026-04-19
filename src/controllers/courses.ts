@@ -1,20 +1,35 @@
-import type { BodyContext, ParamsContext } from '../types/context.js'
-import type { CreateCourseDtoType, GetCourseParamsDtoType } from '../schemas/courses/input.js'
 import type {
+  BodyAndParamsContext,
+  BodyContext,
+  ParamsContext,
+  VoidContext,
+} from '../types/context.js'
+import type {
+  CreateCourseDtoType,
+  CreateCourseEnrolmentDtoType,
+  EditCourseBodyDtoType,
+  EditCourseParamsDtoType,
+  GetCourseParamsDtoType,
+} from '../schemas/courses/input.js'
+import type {
+  CreateCourseEnrolmentResponseDtoType,
   CreateCourseResponseDtoType,
+  EditCourseResponseDtoType,
   GetCourseResponseDtoType,
+  GetCoursesResponseDtoType,
 } from '../schemas/courses/output.js'
 
 import DbApi from '../services/dbApi.js'
 
 const courseService = DbApi.getInstance().course()
+const courseEnrolmentService = DbApi.getInstance().courseEnrolment()
 
 export async function createCourse(
   ctx: BodyContext<CreateCourseDtoType>,
 ): Promise<CreateCourseResponseDtoType> {
   const data = ctx.request.body
-  const { id, createdAt } = await courseService.create({ data })
-  return { id, createdAt }
+  const created = await courseService.create({ data })
+  return created
 }
 
 export async function getCourse(
@@ -67,4 +82,40 @@ export async function getCourse(
     ...cleanedCourse,
     staff,
   }
+}
+
+export async function getCourses(_ctx: VoidContext): Promise<GetCoursesResponseDtoType> {
+  const courses = await courseService.findMany({
+    select: {
+      id: true,
+      name: true,
+      startDate: true,
+      endDate: true,
+    },
+  })
+  return { courses }
+}
+
+export async function createCourseEnrolment(
+  ctx: BodyContext<CreateCourseEnrolmentDtoType>,
+): Promise<CreateCourseEnrolmentResponseDtoType> {
+  const data = ctx.request.body
+  const created = await courseEnrolmentService.create({
+    data,
+  })
+  return created
+}
+
+export async function editCourse(
+  ctx: BodyAndParamsContext<EditCourseBodyDtoType, EditCourseParamsDtoType>,
+): Promise<EditCourseResponseDtoType> {
+  const id = ctx.params.id
+  const data = ctx.request.body
+  const edited = await courseService.update({
+    where: {
+      id,
+    },
+    data,
+  })
+  return edited
 }
