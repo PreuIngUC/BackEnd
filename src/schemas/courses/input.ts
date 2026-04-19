@@ -1,9 +1,13 @@
 import { z } from 'zod'
-import { CourseSchema, CourseEnrolmentSchema, SectionSchema, SectionEnrolmentSchema } from '../../../generated/zod/index.js'
+import { CourseSchema, CourseEnrolmentSchema, SectionSchema, SectionEnrolmentSchema } from '../../generated/zod/index.js'
 
 export const CreateCourseDto = CourseSchema.omit({
     id: true,
     createdAt: true
+})
+
+export const GetCourseParamsDto = CourseSchema.pick({
+    id: true
 })
 
 export const CreateCourseEnrolmentDto = CourseEnrolmentSchema.omit({
@@ -25,5 +29,6 @@ export type CreateCourseDtoType = z.infer<typeof CreateCourseDto>
 export type CreateCourseEnrolmentDtoType = z.infer<typeof CreateCourseEnrolmentDto>
 export type CreateSectionDtoType = z.infer<typeof CreateSectionDto>
 export type CreateSectionEnrolmentDtoType = z.infer<typeof CreateSectionEnrolmentDto>
+export type GetCourseParamsDtoType = z.infer<typeof GetCourseParamsDto>
 
 
