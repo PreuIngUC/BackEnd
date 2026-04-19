@@ -40,14 +40,7 @@ export async function getCourse(
     where: {
       id,
     },
-    select: {
-      id: true,
-      name: true,
-      open: true,
-      finished: true,
-      startDate: true,
-      endDate: true,
-      createdAt: true,
+    include: {
       courseEnrolments: {
         select: {
           user: {

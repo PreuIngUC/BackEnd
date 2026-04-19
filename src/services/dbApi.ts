@@ -44,6 +44,12 @@ class DbApi {
   courseEnrolment() {
     return this.prisma.courseEnrolment
   }
+  section() {
+    return this.prisma.section
+  }
+  sectionEnrolment() {
+    return this.prisma.sectionEnrolment
+  }
   async disconnect() {
     await this.prisma.$disconnect()
   }

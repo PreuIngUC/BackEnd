@@ -14,6 +14,10 @@ enum Permissions {
   ReadCourses = 'read:courses',
   EditCourses = 'edit:courses',
   CreateCourseEnrolments = 'create:course_enrolments',
+  CreateSections = 'create:sections',
+  ReadSections = 'read:sections',
+  EditSections = 'edit:sections',
+  CreateSectionEnrolments = 'create:section_enrolments',
 }
 
 export default Permissions
