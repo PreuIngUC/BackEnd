@@ -98,4 +98,12 @@ sectionsRouter.post(
   authorize(Permissions.CreateSectionEnrolments),
 )
 
+// sectionsRouter.get(
+//   '/section_enrolments',
+//   {
+//     query:
+//   }
+
+// )
+
 export default sectionsRouter

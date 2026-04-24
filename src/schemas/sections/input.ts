@@ -24,6 +24,8 @@ export const CreateSectionEnrolmentDto = SectionEnrolmentSchema.omit({
   createdAt: true,
 })
 
+// export const GetSectionEnrolmentsQueryDto = SectionEnrolmentSchema.partial()
+
 export type CreateSectionDtoType = z.infer<typeof CreateSectionDto>
 export type GetSectionParamsDtoType = z.infer<typeof GetSectionParamsDto>
 export type CreateSectionEnrolmentDtoType = z.infer<typeof CreateSectionEnrolmentDto>
