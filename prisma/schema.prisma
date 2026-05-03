@@ -63,11 +63,6 @@ enum ApplicationState {
   ACTIVE
 }
 
-enum StaffApplicationsRole {
-  COORDINATOR
-  TEACHER
-}
-
 model StaffProfile {
   id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
   userId String @map("user_id") @db.Uuid @unique
@@ -76,7 +71,6 @@ model StaffProfile {
   program String
   university String
   entryYear Int @map("entry_year")
-  role StaffApplicationsRole
 
   user User @relation(fields: [userId], references: [id])
 
