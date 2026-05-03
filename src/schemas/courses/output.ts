@@ -17,6 +17,8 @@ export const GetCourseResponseDto = CourseSchema.extend({
   })
     .extend({
       role: CourseEnrolmentSchema.shape.role,
+      courseEnrolmentId: CourseEnrolmentSchema.shape.id,
+      active: z.boolean(),
     })
     .array(),
   sections: SectionSchema.pick({

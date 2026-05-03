@@ -52,6 +52,8 @@ export async function getCourse(
             },
           },
           role: true,
+          active: true,
+          id: true,
         },
       },
       sections: {
@@ -65,10 +67,12 @@ export async function getCourse(
   if (!course) throw new Error('El curso buscado no existe.')
   const { courseEnrolments, ...cleanedCourse } = course
   const staff = courseEnrolments.map(cE => {
-    const { user, role } = cE
+    const { user, role, id, active } = cE
     return {
       ...user,
       role,
+      courseEnrolmentId: id,
+      active,
     }
   })
   return {

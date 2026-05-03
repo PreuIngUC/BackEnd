@@ -4,6 +4,9 @@ import { CourseSchema, CourseEnrolmentSchema } from '../../generated/zod/index.j
 export const CreateCourseDto = CourseSchema.omit({
   id: true,
   createdAt: true,
+  finished: true,
+  openForTeachers: true,
+  openForCoordinators: true,
 })
 
 export const GetCourseParamsDto = CourseSchema.pick({
