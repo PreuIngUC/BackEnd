@@ -90,6 +90,10 @@ export const ReadJobsStatusResDto = CreationJobSchema.pick({
   status: true,
 })
 
+export const StudentAbleToApplyResDto = z.object({
+  ableToApply: z.boolean(),
+})
+
 export type GetStudentApplicationsResDtoType = z.infer<typeof GetStudentApplicationsResDto>
 
 export type GetStaffApplicationsResDtoType = z.infer<typeof GetStaffApplicationsResDto>
@@ -105,3 +109,5 @@ export type StartAccountsCreationResDtoType = z.infer<typeof StartAccountsCreati
 export type AccountsCreationStepResDtoType = z.infer<typeof AccountsCreationStepResDto>
 
 export type ReadJobsStatusResDtoType = z.infer<typeof ReadJobsStatusResDto>
+
+export type StudentAbleToApplyResDtoType = z.infer<typeof StudentAbleToApplyResDto>

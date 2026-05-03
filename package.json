@@ -12,11 +12,11 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "postinstall": "npm run prisma:generate",
-    "prisma:generate": "npx prisma generate",
-    "postprisma:generate": "npm run fix:zod_imports",
+    "postinstall": "pnpm prisma:generate",
+    "prisma:generate": "pnpm prisma generate",
+    "postprisma:generate": "pnpm fix:zod_imports",
     "fix:zod_imports": "node scripts/fix-esm-zod-imports.mjs",
-    "postfix:zod_imports": "npm run fix:zod_exports",
+    "postfix:zod_imports": "pnpm fix:zod_exports",
     "fix:zod_exports": "node scripts/fix-esm-zod-exports.mjs"
   },
   "repository": {
