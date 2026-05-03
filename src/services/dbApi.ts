@@ -38,6 +38,18 @@ class DbApi {
   creationJobItem() {
     return this.prisma.creationJobItem
   }
+  course() {
+    return this.prisma.course
+  }
+  courseEnrolment() {
+    return this.prisma.courseEnrolment
+  }
+  section() {
+    return this.prisma.section
+  }
+  sectionEnrolment() {
+    return this.prisma.sectionEnrolment
+  }
   async disconnect() {
     await this.prisma.$disconnect()
   }

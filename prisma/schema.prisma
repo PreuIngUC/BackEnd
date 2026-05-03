@@ -72,6 +72,10 @@ model StaffProfile {
   entryYear Int @map("entry_year")
   studentNumber String @unique @map("student_number")
 
+  program String
+  university String
+  entryYear Int @map("entry_year")
+
   user User @relation(fields: [userId], references: [id])
 
   @@map("staff_profiles")
