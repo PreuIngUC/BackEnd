@@ -175,6 +175,7 @@ model Course {
 
   sections Section[]
   courseEnrolments CourseEnrolment[]
+  courseApplications CourseApplication[]
 
   @@map("courses")
 }
@@ -198,6 +199,24 @@ model CourseEnrolment {
   course Course @relation(fields: [courseId], references: [id])
 
   @@map("course_enrolments")
+}
+
+enum CourseApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model CourseApplication {
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
+  userId String @map("user_id") @db.Uuid /// @zod.string.uuid()
+  courseId String @map("course_id") @db.Uuid /// @zod.string.uuid()
+  type CourseRole
+  status CourseApplicationStatus
+
+  course Course @relation(fields: [courseId], references: [id])
+
+  @@map("course_applications")
 }
 
 model Section {
