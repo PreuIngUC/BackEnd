@@ -1,6 +1,6 @@
 import DocumentedRouter from '../../infrastructure/openapi/documentedRouter.js'
 import * as controller from '../../controllers/creationJobs.js'
-import { AccountsCreationStepParamsDto } from '../../schemas/users/applications.js'
+import { AccountsCreationStepParamsDto } from '../../schemas/users/input/applications.js'
 import authorize from '../../middlewares/authorize.js'
 import Permissions from '../../constants/permissions.js'
 import {

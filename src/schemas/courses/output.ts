@@ -33,6 +33,7 @@ export const GetCoursesResponseDto = z.object({
     name: true,
     startDate: true,
     endDate: true,
+    finished: true,
   }).array(),
 })
 

@@ -88,6 +88,7 @@ export async function getCourses(_ctx: VoidContext): Promise<GetCoursesResponseD
       name: true,
       startDate: true,
       endDate: true,
+      finished: true,
     },
   })
   return { courses }

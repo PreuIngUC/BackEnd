@@ -169,8 +169,8 @@ model Course {
   openForTeachers Boolean @default(false) @map("open_for_teachers")
   openForCoordinators Boolean @default(false) @map("open_for_coordinators")
   finished Boolean @default(false)
-  startDate DateTime @map("start_date")
-  endDate DateTime @map("end_date")
+  startDate DateTime? @map("start_date")
+  endDate DateTime? @map("end_date")
   createdAt DateTime @default(now()) @map("created_at")
 
   sections Section[]

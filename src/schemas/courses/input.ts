@@ -7,6 +7,9 @@ export const CreateCourseDto = CourseSchema.omit({
   finished: true,
   openForTeachers: true,
   openForCoordinators: true,
+}).extend({
+  startDate: CourseSchema.shape.startDate.optional(),
+  endDate: CourseSchema.shape.endDate.optional(),
 })
 
 export const GetCourseParamsDto = CourseSchema.pick({
