@@ -1,5 +1,5 @@
 import { VoidContext, ParamsContext } from '../types/context.js'
-import { AccountsCreationStepParamsDtoType } from '../schemas/users/applications.js'
+import { AccountsCreationStepParamsDtoType } from '../schemas/users/input/applications.js'
 import RoleId from '../constants/roles.js'
 import AuthApi from '../services/authApi.js'
 import DbApi from '../services/dbApi.js'

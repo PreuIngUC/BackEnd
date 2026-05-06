@@ -6,12 +6,14 @@ import {
   EditCourseBodyDto,
   EditCourseParamsDto,
   GetCourseParamsDto,
+  GetCourseSectionsParamsDto,
 } from '../../schemas/courses/input.js'
 import {
   CreateCourseEnrolmentResponseDto,
   CreateCourseResponseDto,
   EditCourseResponseDto,
   GetCourseResponseDto,
+  GetCourseSectionsResponseDto,
   GetCoursesResponseDto,
 } from '../../schemas/courses/output.js'
 import authorize from '../../middlewares/authorize.js'
@@ -97,6 +99,22 @@ coursesRouter.post(
     summary: 'Creates an enrolment to a specific course',
   },
   authorize(Permissions.CreateCourseEnrolments),
+)
+
+coursesRouter.get(
+  '/course/:id/sections',
+  {
+    params: GetCourseSectionsParamsDto,
+  },
+  controller.getCourseSections,
+  {
+    status: 200,
+    schema: GetCourseSectionsResponseDto,
+  },
+  {
+    summary: 'Returns all sections linked to a course',
+  },
+  authorize(Permissions.ReadSections),
 )
 
 export default coursesRouter

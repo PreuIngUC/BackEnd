@@ -49,6 +49,7 @@ model User {
   studentProfile StudentProfile?
   creationJob CreationJob[]
   creationJobItem CreationJobItem[]
+  courseApplications CourseApplication[]
   @@map("users")
 }
 
@@ -212,9 +213,10 @@ model CourseApplication {
   userId String @map("user_id") @db.Uuid /// @zod.string.uuid()
   courseId String @map("course_id") @db.Uuid /// @zod.string.uuid()
   type CourseRole
-  status CourseApplicationStatus
+  status CourseApplicationStatus @default(PENDING)
 
   course Course @relation(fields: [courseId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
   @@map("course_applications")
 }
