@@ -1,6 +1,12 @@
 import { z } from 'zod'
-import { UserSchema, StaffProfileSchema, StudentProfileSchema } from '../../generated/zod/index.js'
-import rutVerify from '../../utils/rutVerify.js'
+import {
+  UserSchema,
+  StaffProfileSchema,
+  StudentProfileSchema,
+  CourseSchema,
+  CourseApplicationSchema,
+} from '../../../generated/zod/index.js'
+import rutVerify from '../../../utils/rutVerify.js'
 
 const UserInput = UserSchema.omit({
   id: true,
@@ -25,6 +31,12 @@ const StudentInput = StudentProfileSchema.omit({
 export const StaffApplicationDto = z.object({
   user: UserInput,
   staff: StaffInput,
+  applications: z.array(
+    z.object({
+      courseId: CourseSchema.shape.id,
+      type: CourseApplicationSchema.shape.type,
+    }),
+  ),
 })
 
 export const StudentApplicationDto = z.object({
@@ -33,7 +45,7 @@ export const StudentApplicationDto = z.object({
 })
 
 export const EditStudentApplicationDto = z.object({
-  id: UserSchema.shape.id
+  id: UserSchema.shape.id,
 })
 
 export const ApplicationAcceptanceBodyDto = StudentProfileSchema.pick({

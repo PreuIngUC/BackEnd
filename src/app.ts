@@ -1,6 +1,7 @@
 import cors from '@koa/cors'
 import Koa from 'koa'
 import bodyParser from 'koa-bodyparser'
+import { koaSwagger } from 'koa2-swagger-ui'
 import env from './config/env.js'
 import globalErrorHandler from './middlewares/globalErrorHandler.js'
 import router from './routes/index.js'
@@ -50,5 +51,14 @@ app.use(bodyParser())
 
 app.use(router.routes())
 app.use(router.allowedMethods())
+
+app.use(
+  koaSwagger({
+    routePrefix: '/docs',
+    swaggerOptions: {
+      url: '/openapi.json',
+    },
+  }),
+)
 
 export default app

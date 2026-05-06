@@ -1,0 +1,159 @@
+import type {
+  BodyAndParamsContext,
+  BodyContext,
+  ParamsContext,
+  VoidContext,
+} from '../types/context.js'
+import type {
+  CreateCourseDtoType,
+  CreateCourseEnrolmentDtoType,
+  EditCourseBodyDtoType,
+  EditCourseParamsDtoType,
+  GetCourseParamsDtoType,
+  GetCourseSectionsParamsDtoType,
+} from '../schemas/courses/input.js'
+import type {
+  CreateCourseEnrolmentResponseDtoType,
+  CreateCourseResponseDtoType,
+  EditCourseResponseDtoType,
+  GetCourseResponseDtoType,
+  GetCoursesResponseDtoType,
+  GetCourseSectionsResponseDtoType,
+  GetCoursesAvailableForApplicationsResponseDtoType,
+} from '../schemas/courses/output.js'
+
+import DbApi from '../services/dbApi.js'
+
+const courseService = DbApi.getInstance().course()
+const courseEnrolmentService = DbApi.getInstance().courseEnrolment()
+const sectionService = DbApi.getInstance().section()
+
+export async function createCourse(
+  ctx: BodyContext<CreateCourseDtoType>,
+): Promise<CreateCourseResponseDtoType> {
+  const data = ctx.request.body
+  const created = await courseService.create({ data })
+  return created
+}
+
+export async function getCourse(
+  ctx: ParamsContext<GetCourseParamsDtoType>,
+): Promise<GetCourseResponseDtoType> {
+  const { id } = ctx.params
+  const course = await courseService.findUnique({
+    where: {
+      id,
+    },
+    include: {
+      courseEnrolments: {
+        select: {
+          user: {
+            select: {
+              id: true,
+              names: true,
+              lastName0: true,
+              lastName1: true,
+            },
+          },
+          role: true,
+          active: true,
+          id: true,
+        },
+      },
+      sections: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  })
+  if (!course) throw new Error('El curso buscado no existe.')
+  const { courseEnrolments, ...cleanedCourse } = course
+  const staff = courseEnrolments.map(cE => {
+    const { user, role, id, active } = cE
+    return {
+      ...user,
+      role,
+      courseEnrolmentId: id,
+      active,
+    }
+  })
+  return {
+    ...cleanedCourse,
+    staff,
+  }
+}
+
+export async function getCourses(_ctx: VoidContext): Promise<GetCoursesResponseDtoType> {
+  const courses = await courseService.findMany({
+    select: {
+      id: true,
+      name: true,
+      startDate: true,
+      endDate: true,
+      finished: true,
+    },
+  })
+  return { courses }
+}
+
+export async function createCourseEnrolment(
+  ctx: BodyContext<CreateCourseEnrolmentDtoType>,
+): Promise<CreateCourseEnrolmentResponseDtoType> {
+  const data = ctx.request.body
+  const created = await courseEnrolmentService.create({
+    data,
+  })
+  return created
+}
+
+export async function editCourse(
+  ctx: BodyAndParamsContext<EditCourseBodyDtoType, EditCourseParamsDtoType>,
+): Promise<EditCourseResponseDtoType> {
+  const id = ctx.params.id
+  const data = ctx.request.body
+  const edited = await courseService.update({
+    where: {
+      id,
+    },
+    data,
+  })
+  return edited
+}
+
+export async function getCourseSections(
+  ctx: ParamsContext<GetCourseSectionsParamsDtoType>,
+): Promise<GetCourseSectionsResponseDtoType> {
+  const { id } = ctx.params
+  const sections = await sectionService.findMany({
+    where: {
+      courseId: id,
+    },
+    select: {
+      id: true,
+      name: true,
+    },
+  })
+  return { sections }
+}
+
+export async function getCoursesAvailableForApplications(
+  _ctx: VoidContext,
+): Promise<GetCoursesAvailableForApplicationsResponseDtoType> {
+  const courses = await courseService.findMany({
+    where: {
+      AND: [
+        { OR: [{ openForTeachers: { equals: true } }, { openForCoordinators: { equals: true } }] },
+        { finished: { equals: false } },
+      ],
+    },
+    select: {
+      id: true,
+      name: true,
+      openForCoordinators: true,
+      openForTeachers: true,
+    },
+  })
+  return { courses }
+}

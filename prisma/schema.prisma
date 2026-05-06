@@ -39,10 +39,9 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
 
   pronouns Pronouns
-  birthDate DateTime @db.Date
-  phoneNumber String @unique /// @zod.string.trim().regex(/^\+\d{11}$/, { message: "El teléfono debe ser + seguido de 11 dígitos (ej: +56912345678)" })
+  birthDate DateTime @db.Date @map("birth_date")
+  phoneNumber String @unique @map("phone_number") /// @zod.string.trim().regex(/^\+\d{11}$/, { message: "El teléfono debe ser + seguido de 11 dígitos (ej: +56912345678)" })
 
-  userRoles UserRole[]
   courseEnrolments CourseEnrolment[]
   sectionEnrolments SectionEnrolment[]
   attendances Attendance[]
@@ -50,6 +49,7 @@ model User {
   studentProfile StudentProfile?
   creationJob CreationJob[]
   creationJobItem CreationJobItem[]
+  courseApplications CourseApplication[]
   @@map("users")
 }
 
@@ -68,6 +68,10 @@ model StaffProfile {
   id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
   userId String @map("user_id") @db.Uuid @unique
   applicationState ApplicationState @default(PENDING_AS_STAFF) @map("application_state")
+  program String
+  university String
+  entryYear Int @map("entry_year")
+  studentNumber String @unique @map("student_number")
 
   user User @relation(fields: [userId], references: [id])
 
@@ -124,91 +128,104 @@ model StudentProfile {
   userId String @map("user_id") @db.Uuid @unique /// @zod.string.uuid()
   applicationState ApplicationState @default(PENDING_AS_STUDENT) @map("application_state")
 
-  educationalLevel EducationalLevel
+  educationalLevel EducationalLevel @map("educational_level")
   school String
-  schoolType SchoolType
-  schoolDependency SchoolDependency
+  schoolType SchoolType @map("school_type")
+  schoolDependency SchoolDependency @map("school_dependency")
   residence String /// @zod.string.trim().min(1, { message: "La comuna de residencia no puede estar vacía ni contener solo espacios." })
-  electiveTest ElectiveTest
-  takesM2 TakesM2
-  targetProgram String /// @zod.string.trim().min(1, { message: "La carrera no puede estar vacía ni contener solo espacios." })
-  targetUniversity String /// @zod.string.trim().min(1, { message: "La universidad no puede estar vacía ni contener solo espacios." })
-  goalsAndPlans String //Objetivos y planes con el preu
+  electiveTest ElectiveTest @map("elective_test")
+  takesM2 TakesM2 @map("takes_m2")
+  targetProgram String @map("target_program") /// @zod.string.trim().min(1, { message: "La carrera no puede estar vacía ni contener solo espacios." })
+  targetUniversity String @map("target_university") /// @zod.string.trim().min(1, { message: "La universidad no puede estar vacía ni contener solo espacios." })
+  goalsAndPlans String @map("goals_and_plans") //Objetivos y planes con el preu
 
-  scheduleDifficulties String?
+  scheduleDifficulties String? @map("schedule_difficulties")
 
-  avg1M Decimal @db.Decimal(2, 1) /// @zod.custom.use(z.number().min(0.0).max(7.0))
-  avg2M Decimal @db.Decimal(2, 1) /// @zod.custom.use(z.number().min(0.0).max(7.0))
-  avg3M Decimal @db.Decimal(2, 1) /// @zod.custom.use(z.number().min(0.0).max(7.0))
-  avg4M Decimal @db.Decimal(2, 1) /// @zod.custom.use(z.number().min(0.0).max(7.0))
+  avg1M Decimal @db.Decimal(2, 1) @map("avg_1m") /// @zod.custom.use(z.number().min(0.0).max(7.0))
+  avg2M Decimal @db.Decimal(2, 1) @map("avg_2m")/// @zod.custom.use(z.number().min(0.0).max(7.0))
+  avg3M Decimal @db.Decimal(2, 1) @map("avg_3m") /// @zod.custom.use(z.number().min(0.0).max(7.0))
+  avg4M Decimal @db.Decimal(2, 1) @map("avg_4m") /// @zod.custom.use(z.number().min(0.0).max(7.0))
 
-  rshSection RSHSection
+  rshSection RSHSection @map("rsh_section")
 
-  familySize Int /// @zod.number.int().positive({ message: "Debe ser un valor positivo"})
-  totalMonthlyIncome Int /// @zod.number.int().nonnegative({ message: "Debe ser un valor positivo" })
-  monthlyFoodExpenses Int /// @zod.number.int().nonnegative({ message: "Debe ser un valor positivo" })
-  monthlyEducationExpenses Int /// @zod.number.int().nonnegative({ message: "Debe ser un valor positivo" })
-  monthlyUtilitiesExpenses Int /// @zod.number.int().nonnegative({ message: "Debe ser un valor positivo" })
-  monthlyTelecomExpenses Int /// @zod.number.int().nonnegative({ message: "Debe ser un valor positivo" })
-  monthlyTransportationExpenses Int /// @zod.number.int().nonnegative({ message: "Debe ser un valor positivo" })
-  monthlyHousingExpenses Int /// @zod.number.int().nonnegative({ message: "Debe ser un valor positivo" })
-  monthlyHealthcareExpenses Int /// @zod.number.int().nonnegative({ message: "Debe ser un valor positivo" })
-  monthlyMiscExpenses Int /// @zod.number.int().nonnegative({ message: "Debe ser un valor positivo" })
+  familySize Int @map("family_size") /// @zod.number.int().positive({ message: "Debe ser un valor positivo"})
+  totalMonthlyIncome Int @map("total_monthly_income") /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyFoodExpenses Int @map("monthly_food_expenses") /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyEducationExpenses Int @map("monthly_education_expenses") /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyUtilitiesExpenses Int @map("monthly_utilities_expenses") /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyTelecomExpenses Int @map("monthly_telecom_expenses") /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyTransportationExpenses Int @map("monthly_transportation_expenses") /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyHousingExpenses Int @map("monthly_housing_expenses") /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyHealthcareExpenses Int @map("monthly_healthcare_expenses") /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
+  monthlyMiscExpenses Int @map("monthly_misc_expenses") /// @zod.number.int().positive({ message: "Debe ser un valor positivo" })
 
   user User @relation(fields: [userId], references: [id])
 
   @@map("student_profiles")
 }
 
-model Role {
-  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
-  label String @unique
-
-  userRoles UserRole[]
-
-  courseEnrolments CourseEnrolment[]
-  sectionEnrolments SectionEnrolment[]
-  
-  @@map("roles")
-}
-
-model UserRole {
-  userId String @map("user_id") @db.Uuid /// @zod.string.uuid()
-  roleId String @map("role_id") @db.Uuid /// @zod.string.uuid()
-
-  user User @relation(fields: [userId], references: [id])
-  role Role @relation(fields: [roleId], references: [id])
-
-  @@id([userId, roleId])
-  @@map("user_roles")
-}
-
 model Course {
   id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
   name String
+  openForTeachers Boolean @default(false) @map("open_for_teachers")
+  openForCoordinators Boolean @default(false) @map("open_for_coordinators")
+  finished Boolean @default(false)
+  startDate DateTime? @map("start_date")
+  endDate DateTime? @map("end_date")
+  createdAt DateTime @default(now()) @map("created_at")
 
   sections Section[]
   courseEnrolments CourseEnrolment[]
+  courseApplications CourseApplication[]
 
   @@map("courses")
+}
+
+enum CourseRole {
+  COORDINATOR
+  TEACHER
 }
 
 model CourseEnrolment {
   id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
   userId String @map("user_id") @db.Uuid /// @zod.string.uuid()
-  roleId String @map("role_id") @db.Uuid /// @zod.string.uuid()
   courseId String @map("course_id") @db.Uuid /// @zod.string.uuid()
+  role CourseRole
+  createdAt DateTime @default(now()) @map("created_at")
+  startDate DateTime @map("start_date")
+  endDate DateTime @map("end_date")
+  active Boolean @default(true)
 
   user User @relation(fields: [userId], references: [id])
-  role Role @relation(fields: [roleId], references: [id])
   course Course @relation(fields: [courseId], references: [id])
 
   @@map("course_enrolments")
 }
 
+enum CourseApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model CourseApplication {
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
+  userId String @map("user_id") @db.Uuid /// @zod.string.uuid()
+  courseId String @map("course_id") @db.Uuid /// @zod.string.uuid()
+  type CourseRole
+  status CourseApplicationStatus @default(PENDING)
+
+  course Course @relation(fields: [courseId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("course_applications")
+}
+
 model Section {
   id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
   courseId String @map("course_id") @db.Uuid /// @zod.string.uuid()
+  name String
+  createdAt DateTime @default(now()) @map("created_at")
 
   course Course @relation(fields: [courseId], references: [id])
   sectionEnrolments SectionEnrolment[]
@@ -218,14 +235,22 @@ model Section {
   @@map("sections")
 }
 
+enum SectionRole {
+  TEACHER
+  STUDENT
+}
+
 model SectionEnrolment {
   id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
   userId String @map("user_id") @db.Uuid /// @zod.string.uuid()
-  roleId String @map("role_id") @db.Uuid /// @zod.string.uuid()
   sectionId String @map("section_id") @db.Uuid /// @zod.string.uuid()
+  role SectionRole
+  createdAt DateTime @default(now()) @map("created_at")
+  startDate DateTime @map("start_date")
+  endDate DateTime @map("end_date")
+  active Boolean @default(true)
 
   user User @relation(fields: [userId], references: [id])
-  role Role @relation(fields: [roleId], references: [id])
   section Section @relation(fields: [sectionId], references: [id])
 
   @@map("section_enrolments")
@@ -235,9 +260,9 @@ model Schedule {
   id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
   sectionId String @map("section_id") @db.Uuid /// @zod.string.uuid()
   day Int /// @zod.number.int().min(0).max(6, { message: "Día debe ser entre 0 y 6" })
-  // Minutos desde la medianoche:
-  startTime Int @map("start_time") /// @zod.number.int().min(0).max(1439)
-  endTime Int @map("end_time") /// @zod.number.int().min(0).max(1439)
+  timeBlock Int @map("time_block") /// @zod.number.int().min(1).max(2)
+  classroom String?
+  repetition Int @default(7) /// @zod.number.int().min(1)
 
   section Section @relation(fields: [sectionId], references: [id])
 
@@ -252,14 +277,35 @@ model Event {
 
   section Section @relation(fields: [sectionId], references: [id])
   attendances Attendance[]
+  eventTokens EventToken[]
 
   @@map("events")
+}
+
+model EventToken {
+  id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
+  eventId String @map("event_id") @db.Uuid /// @zod.string.uuid()
+  timeStamp Int @map("time_stamp")/// @zod.number.int().min(0)
+
+  event Event @relation(fields: [eventId], references: [id])
+
+  @@map("event_tokens")
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  JUSTIFIED
 }
 
 model Attendance {
   id String @id @default(uuid()) @db.Uuid /// @zod.string.uuid()
   userId String @map("user_id") @db.Uuid /// @zod.string.uuid()
   eventId String @map("event_id") @db.Uuid /// @zod.string.uuid()
+  updatedAt DateTime @updatedAt @map("updated_at")
+  status AttendanceStatus @default(ABSENT)
+  comments String?
 
   user User @relation(fields: [userId], references: [id])
   event Event @relation(fields: [eventId], references: [id])
@@ -285,7 +331,7 @@ model CreationJob {
   creatorId String @map("creator_id") @db.Uuid /// @zod.string.uuid()
   target CreationJobTarget
   status CreationJobStatus
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
 
   creator User @relation(fields: [creatorId], references: [id])
   item CreationJobItem[]

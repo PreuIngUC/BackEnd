@@ -4,7 +4,7 @@ import {
   StaffApplicationDto,
   StudentApplicationDto,
   VerifyThenPasswordBodyDto,
-} from '../../schemas/users/applications.js'
+} from '../../schemas/users/input/applications.js'
 import { StudentAbleToApplyResDto } from '../../schemas/users/output/applications.js'
 
 const usersRouter = new DocumentedRouter('/api/public')
