@@ -7,6 +7,9 @@ export const CreateCourseDto = CourseSchema.omit({
   finished: true,
   openForTeachers: true,
   openForCoordinators: true,
+}).extend({
+  startDate: CourseSchema.shape.startDate.optional(),
+  endDate: CourseSchema.shape.endDate.optional(),
 })
 
 export const GetCourseParamsDto = CourseSchema.pick({
@@ -27,8 +30,13 @@ export const EditCourseParamsDto = z.object({
   id: CourseSchema.shape.id,
 })
 
+export const GetCourseSectionsParamsDto = z.object({
+  id: CourseSchema.shape.id,
+})
+
 export type CreateCourseDtoType = z.infer<typeof CreateCourseDto>
 export type CreateCourseEnrolmentDtoType = z.infer<typeof CreateCourseEnrolmentDto>
 export type GetCourseParamsDtoType = z.infer<typeof GetCourseParamsDto>
 export type EditCourseBodyDtoType = z.infer<typeof EditCourseBodyDto>
 export type EditCourseParamsDtoType = z.infer<typeof EditCourseParamsDto>
+export type GetCourseSectionsParamsDtoType = z.infer<typeof GetCourseSectionsParamsDto>

@@ -12,7 +12,7 @@ import type {
   StudentApplicationDtoType,
   StudentApplicationStateChangeParamsDtoType,
   VerifyThenPasswordBodyDtoType,
-} from '../schemas/users/applications.js'
+} from '../schemas/users/input/applications.js'
 import DbApi from '../services/dbApi.js'
 import AuthApi from '../services/authApi.js'
 import { ApplicationError } from '../utils/errors/applications.js'
@@ -40,7 +40,7 @@ const staffProfileService = DbApi.getInstance().staffProfile()
 //FIXME: si la postulación permitiera reescribir podría modificar a usuarios que ya fueron aceptados
 
 export async function createStaffApplication(ctx: BodyContext<StaffApplicationDtoType>) {
-  const { user, staff } = ctx.request.body
+  const { user, staff, applications } = ctx.request.body
   await userService.create({
     data: {
       ...user,
@@ -49,9 +49,11 @@ export async function createStaffApplication(ctx: BodyContext<StaffApplicationDt
           ...staff,
         },
       },
-    },
-    include: {
-      staffProfile: true,
+      courseApplications: {
+        createMany: {
+          data: applications,
+        },
+      },
     },
   })
 }
@@ -66,9 +68,6 @@ export async function createStudentApplication(ctx: BodyContext<StudentApplicati
           ...student,
         },
       },
-    },
-    include: {
-      studentProfile: true,
     },
   })
 }
