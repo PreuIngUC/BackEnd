@@ -4,6 +4,7 @@ import {
   StudentProfileSchema,
   StaffProfileSchema,
   CreationJobSchema,
+  CourseApplicationSchema,
 } from '../../../generated/zod/index.js'
 
 const StudentAndApplicationStateDto = UserSchema.pick({
@@ -56,11 +57,23 @@ export const GetStudentApplicationResDto = z.object({
 })
 
 export const GetStaffApplicationResDto = z.object({
-  user: UserSchema.extend({
+  user: UserSchema.omit({
+    createdAt: true,
+    auth0Id: true,
+    id: true,
+  }).extend({
     staffProfile: StaffProfileSchema.omit({
       id: true,
       userId: true,
     }),
+    courseApplications: CourseApplicationSchema.omit({
+      userId: true,
+      courseId: true,
+    })
+      .extend({
+        course: z.string(),
+      })
+      .array(),
   }),
 })
 

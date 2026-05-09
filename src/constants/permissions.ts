@@ -10,6 +10,7 @@ enum Permissions {
   CreateStaffUsers = 'create:staff_users',
   ReadJobsStatus = 'read:jobs_status',
   EditStudentApplications = 'edit:student_applications',
+  EditStaffApplications = 'edit:staff_applications',
   CreateCourses = 'create:courses',
   ReadCourses = 'read:courses',
   EditCourses = 'edit:courses',
