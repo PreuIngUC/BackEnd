@@ -31,7 +31,7 @@ const env = {
   AUTH0_AUDIENCE: `${get('AUTH0_DOMAIN')}/api/v2/`,
   AUTH0_MANAGEMENT_URL: `${get('AUTH0_DOMAIN')}/api/v2`,
   AUTH0_TOKEN_URL: `${get('AUTH0_DOMAIN')}/oauth/token`,
-  AUTH0_DB_CONNECTIONS_URL: `${get('AUTH0_DOMAIN')}/dbconnections`,
+  AUTH0_DB_CONNECTIONS_URL: `${get('AUTH0_CUSTOM_DOMAIN')}/dbconnections`,
   AUTH0_JWKS_URI: `${get('AUTH0_CUSTOM_DOMAIN')}/.well-known/jwks.json`,
   AUTH0_ADSUM_AUDIENCE: `${get('AUTH0_ADSUM_AUDIENCE')}`,
   AUTH0_PUBLIC_CLIENT_ID: get('AUTH0_PUBLIC_CLIENT_ID'),
