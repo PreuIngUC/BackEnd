@@ -63,9 +63,9 @@ class AuthApi {
     this.expiresAt = Date.now() + data.expires_in * 1000
     return this.auth0Token
   }
-  private async getCurrentHeader(contentType: boolean = false) {
+  private async getCurrentHeader(authorization: boolean = true, contentType: boolean = false) {
     return {
-      Authorization: `Bearer ${await this.getToken()}`,
+      Authorization: authorization ? `Bearer ${await this.getToken()}` : undefined,
       'content-type': contentType ? 'application/json' : undefined,
     }
   }
@@ -82,11 +82,12 @@ class AuthApi {
     route: string,
     data: T,
     to: 'tokenApi' | 'managementApi' | 'dbConnectionsApi' = 'tokenApi',
+    authorization: boolean = true,
     contentType: boolean = false,
   ): AxiosPromise<R> {
     try {
       return await this[to].post<R>(route, data, {
-        headers: await this.getCurrentHeader(contentType),
+        headers: await this.getCurrentHeader(authorization, contentType),
       })
     } catch (err) {
       this.logAxiosError(err)
@@ -96,11 +97,12 @@ class AuthApi {
   private async get<R = unknown>(
     route: string,
     to: 'tokenApi' | 'managementApi' | 'dbConnectionsApi' = 'tokenApi',
+    authorization: boolean = true,
     contentType: boolean = false,
   ): AxiosPromise<R> {
     try {
       return await this[to].get<R>(route, {
-        headers: await this.getCurrentHeader(contentType),
+        headers: await this.getCurrentHeader(authorization, contentType),
       })
     } catch (err) {
       this.logAxiosError(err)
@@ -138,6 +140,7 @@ class AuthApi {
         connection: 'Username-Password-Authentication',
       },
       'dbConnectionsApi',
+      false,
       true,
     )
   }
