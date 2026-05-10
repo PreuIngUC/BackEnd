@@ -8,6 +8,7 @@ import {
   StudentApplicationStateChangeParamsDto,
   StudentApplicationDto,
   EditStudentApplicationDto,
+  StaffApplicationDto,
 } from '../../schemas/users/input/applications.js'
 import {
   GetStudentApplicationsResDto,
