@@ -13,6 +13,7 @@ import {
 const userService = DbApi.getInstance().user()
 const creationJobService = DbApi.getInstance().creationJob()
 const creationJobItemService = DbApi.getInstance().creationJobItem()
+const courseApplicationService = DbApi.getInstance().courseApplication()
 
 //NOTE: si tuvieramos volúmenes muy grandes (cientos) de estudiantes aceptados,
 // sería mejor crear jobs con pocos estudiantes (agregar take al buscar los estudiantes)
@@ -118,6 +119,84 @@ async function jobVerifyForAccCreation(jobId: string, type: 'staff' | 'student')
 
 const usersPerStep = 2
 
+async function createStaffAccount(api: AuthApi, jobId: string, userId: string, email: string) {
+  const user = await api.createAccount(email)
+  const courseApplications = await courseApplicationService.findMany({
+    where: {
+      userId,
+      status: 'ACCEPTED',
+    },
+    select: {
+      courseId: true,
+      type: true,
+    },
+  })
+  await userService.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      auth0Id: user.data.user_id,
+      staffProfile: {
+        update: {
+          applicationState: 'CREATED',
+        },
+      },
+      creationJobItem: {
+        updateMany: {
+          where: {
+            jobId,
+          },
+          data: {
+            status: 'DONE',
+          },
+        },
+      },
+      courseEnrolments: {
+        create: courseApplications.map(app => {
+          return {
+            courseId: app.courseId,
+            role: app.type,
+          }
+        }),
+      },
+    },
+  })
+  const roleIds = []
+  if (courseApplications.some(app => app.type === 'COORDINATOR')) roleIds.push(RoleId.coordinator)
+  if (courseApplications.some(app => app.type === 'TEACHER')) roleIds.push(RoleId.teacher)
+  roleIds.push(RoleId.staff)
+  await api.assignRoles(user.data.user_id, roleIds)
+}
+
+async function createStudentAccount(api: AuthApi, jobId: string, userId: string, email: string) {
+  const user = await api.createAccount(email)
+  await userService.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      auth0Id: user.data.user_id,
+      studentProfile: {
+        update: {
+          applicationState: 'CREATED',
+        },
+      },
+      creationJobItem: {
+        updateMany: {
+          where: {
+            jobId,
+          },
+          data: {
+            status: 'DONE',
+          },
+        },
+      },
+    },
+  })
+  await api.assignRoles(user.data.user_id, [RoleId.student])
+}
+
 async function accountsCreationStep(
   ctx: ParamsContext<AccountsCreationStepParamsDtoType>,
   type: 'staff' | 'student',
@@ -137,36 +216,12 @@ async function accountsCreationStep(
     take: usersPerStep,
   })
   const api = AuthApi.getInstance()
-  const profile = type === 'staff' ? 'staffProfile' : 'studentProfile'
   let created = 0
   let haveErrors = 0
   for (const u of users) {
     try {
-      const user = await api.createAccount(u.email)
-      await userService.update({
-        where: {
-          id: u.id,
-        },
-        data: {
-          auth0Id: user.data.user_id,
-          creationJobItem: {
-            updateMany: {
-              where: {
-                jobId,
-              },
-              data: {
-                status: 'DONE',
-              },
-            },
-          },
-          [profile]: {
-            update: {
-              applicationState: 'CREATED',
-            },
-          },
-        },
-      })
-      await api.assignRoles(user.data.user_id, [RoleId[type]])
+      if (type === 'staff') await createStaffAccount(api, jobId, u.id, u.email)
+      else await createStudentAccount(api, jobId, u.id, u.email)
       created++
     } catch (err) {
       let errString

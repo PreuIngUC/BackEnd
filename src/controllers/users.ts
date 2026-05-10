@@ -33,6 +33,7 @@ import {
 const userService = DbApi.getInstance().user()
 const studentProfileService = DbApi.getInstance().studentProfile()
 const staffProfileService = DbApi.getInstance().staffProfile()
+const courseApplicationService = DbApi.getInstance().courseApplication()
 
 //TODO GENERAL: Agregar errores específicos
 
@@ -72,6 +73,38 @@ export async function createStudentApplication(ctx: BodyContext<StudentApplicati
   })
 }
 
+export async function editStaffApplication(
+  ctx: BodyAndParamsContext<GetStaffApplicationResDtoType, EditStudentApplicationDtoType>,
+) {
+  const { staffProfile: staff, courseApplications: applications, ...user } = ctx.request.body.user
+  const { id } = ctx.params
+  await userService.update({
+    where: {
+      id,
+    },
+    data: {
+      ...user,
+      staffProfile: {
+        update: {
+          ...staff,
+        },
+      },
+      courseApplications: {
+        updateMany: applications.map(app => {
+          const { id, status, ...rest } = app
+          void rest
+          return {
+            where: { id },
+            data: {
+              status,
+            },
+          }
+        }),
+      },
+    },
+  })
+}
+
 export async function editStudentApplication(
   ctx: BodyAndParamsContext<StudentApplicationDtoType, EditStudentApplicationDtoType>,
 ) {
@@ -88,9 +121,6 @@ export async function editStudentApplication(
           ...student,
         },
       },
-    },
-    include: {
-      studentProfile: true,
     },
   })
 }
@@ -140,41 +170,26 @@ export async function getStaffApplications(
   return res
 }
 
-export async function getApplication<
-  R = GetStudentApplicationResDtoType['user'] | GetStaffApplicationResDtoType['user'],
->(type: 'staff' | 'student', id: string): Promise<R> {
-  const profile = type === 'staff' ? 'staffProfile' : 'studentProfile'
-  const states:
-    | StaffApplicationStateChangeParamsDtoType['applicationState'][]
-    | StudentApplicationStateChangeParamsDtoType['applicationState'][] =
-    type === 'staff'
-      ? ['PENDING_AS_STAFF', 'ACCEPTED_AS_STAFF', 'REJECTED_AS_STAFF']
-      : ['PENDING_AS_STUDENT', 'ACCEPTED_AS_STUDENT', 'REJECTED_AS_STUDENT']
-  const user = await userService.findUnique({
+export async function getStudentApplication(
+  ctx: ParamsContext<GetApplicationParamsDtoType>,
+): Promise<GetStudentApplicationResDtoType> {
+  const { id } = ctx.params
+  const pUser = await userService.findUnique({
     where: {
       id,
-      [profile]: {
+      studentProfile: {
         applicationState: {
-          in: states,
+          in: ['PENDING_AS_STUDENT', 'ACCEPTED_AS_STUDENT', 'REJECTED_AS_STUDENT'],
         },
       },
     },
     include: {
-      [profile]: true,
+      studentProfile: true,
     },
   })
-  return user as R
-}
-
-export async function getStudentApplication(ctx: ParamsContext<GetApplicationParamsDtoType>) {
-  const { id } = ctx.params
-  const pUser = await getApplication<Prisma.UserGetPayload<{ include: { studentProfile: true } }>>(
-    'student',
-    id,
-  )
   if (!pUser || !pUser.studentProfile) throw new Error('No existe esa postulación')
   const { avg1M, avg2M, avg3M, avg4M } = pUser.studentProfile
-  const response: GetStudentApplicationResDtoType = {
+  const response = {
     user: {
       ...pUser,
       studentProfile: {
@@ -189,11 +204,55 @@ export async function getStudentApplication(ctx: ParamsContext<GetApplicationPar
   return response
 }
 
-export async function getStaffApplication(ctx: ParamsContext<GetApplicationParamsDtoType>) {
-  const { rut } = ctx.params
-  const user = await getApplication<GetStaffApplicationResDtoType['user']>('staff', rut)
-  if (!user) throw new Error('No existe esa postulación')
-  return { user }
+export async function getStaffApplication(
+  ctx: ParamsContext<GetApplicationParamsDtoType>,
+): Promise<GetStaffApplicationResDtoType> {
+  const { id } = ctx.params
+  const pUser = await userService.findUnique({
+    where: {
+      id,
+      staffProfile: {
+        applicationState: {
+          in: ['PENDING_AS_STAFF', 'ACCEPTED_AS_STAFF', 'REJECTED_AS_STAFF'],
+        },
+      },
+    },
+    include: {
+      staffProfile: true,
+      courseApplications: {
+        select: {
+          type: true,
+          status: true,
+          id: true,
+          course: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+    },
+    omit: {
+      auth0Id: true,
+      createdAt: true,
+      id: true,
+    },
+  })
+  if (!pUser || !pUser.staffProfile) throw new Error('No existe esa postulación')
+
+  const response = {
+    user: {
+      ...pUser,
+      staffProfile: pUser.staffProfile,
+      courseApplications: pUser.courseApplications.map(a => {
+        return {
+          ...a,
+          course: a.course.name,
+        }
+      }),
+    },
+  }
+  return response
 }
 
 interface StudentApplicationStateChange {
@@ -291,6 +350,16 @@ export async function changeStaffApplicationState(
     )
   ) {
     throw new ApplicationError('staff', 'status')
+  }
+  if (applicationState === 'ACCEPTED_AS_STAFF') {
+    const courseApplications = await courseApplicationService.findMany({
+      where: {
+        AND: [{ userId: id }, { status: 'PENDING' }],
+      },
+    })
+    if (courseApplications.length > 0) {
+      throw new Error('Este usuario tiene postulaciones pendientes a cursos')
+    }
   }
   await staffProfileService.update({
     where: {

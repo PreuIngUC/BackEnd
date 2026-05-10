@@ -105,6 +105,22 @@ usersRouter.patch(
   authorize(Permissions.EditStudentApplications),
 )
 
+usersRouter.patch(
+  '/staff/application/:id',
+  {
+    params: EditStudentApplicationDto,
+    body: GetStaffApplicationResDto,
+  },
+  controller.editStaffApplication,
+  {
+    status: 200,
+  },
+  {
+    summary: 'Edits a staff application.',
+  },
+  authorize(Permissions.EditStaffApplications),
+)
+
 usersRouter.get(
   '/students/accepted',
   {},
