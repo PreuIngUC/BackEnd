@@ -144,7 +144,14 @@ export async function getCoursesAvailableForApplications(
   const courses = await courseService.findMany({
     where: {
       AND: [
-        { OR: [{ openForTeachers: { equals: true } }, { openForCoordinators: { equals: true } }] },
+        {
+          OR: [
+            { openForTeachers: { equals: true } },
+            { openForCoordinators: { equals: true } },
+            { openForEditors: { equals: true } },
+            { openForMonitors: { equals: true } },
+          ],
+        },
         { finished: { equals: false } },
       ],
     },
@@ -153,6 +160,8 @@ export async function getCoursesAvailableForApplications(
       name: true,
       openForCoordinators: true,
       openForTeachers: true,
+      openForEditors: true,
+      openForMonitors: true,
     },
   })
   return { courses }
