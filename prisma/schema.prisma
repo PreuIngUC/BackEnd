@@ -169,6 +169,8 @@ model Course {
   name String
   openForTeachers Boolean @default(false) @map("open_for_teachers")
   openForCoordinators Boolean @default(false) @map("open_for_coordinators")
+  openForEditors Boolean @default(false) @map("open_for_editors")
+  openForMonitors Boolean @default(false) @map("open_for_monitors")
   finished Boolean @default(false)
   startDate DateTime? @map("start_date")
   endDate DateTime? @map("end_date")
@@ -184,6 +186,8 @@ model Course {
 enum CourseRole {
   COORDINATOR
   TEACHER
+  EDITOR
+  MONITOR
 }
 
 model CourseEnrolment {

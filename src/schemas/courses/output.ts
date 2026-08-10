@@ -49,11 +49,11 @@ export const EditCourseResponseDto = CourseSchema
 export const CreateCourseEnrolmentResponseDto = CourseEnrolmentSchema
 
 export const GetCoursesAvailableForApplicationsResponseDto = z.object({
-  courses: CourseSchema.pick({
-    id: true,
-    name: true,
-    openForTeachers: true,
-    openForCoordinators: true,
+  courses: CourseSchema.omit({
+    finished: true,
+    startDate: true,
+    endDate: true,
+    createdAt: true,
   }).array(),
 })
 
