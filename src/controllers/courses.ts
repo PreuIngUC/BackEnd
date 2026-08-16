@@ -150,6 +150,11 @@ export async function getCoursesAvailableForApplications(
             { openForCoordinators: { equals: true } },
             { openForEditors: { equals: true } },
             { openForMonitors: { equals: true } },
+            { openForDirectors: { equals: true } },
+            { openForManagers: { equals: true } },
+            { openForDesigners: { equals: true } },
+            { openForDevelopers: { equals: true } },
+            { openForVolunteers: { equals: true } },
           ],
         },
         { finished: { equals: false } },
@@ -162,6 +167,11 @@ export async function getCoursesAvailableForApplications(
       openForTeachers: true,
       openForEditors: true,
       openForMonitors: true,
+      openForDirectors: true,
+      openForManagers: true,
+      openForDesigners: true,
+      openForDevelopers: true,
+      openForVolunteers: true,
     },
   })
   return { courses }
