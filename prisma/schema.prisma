@@ -171,6 +171,12 @@ model Course {
   openForCoordinators Boolean @default(false) @map("open_for_coordinators")
   openForEditors Boolean @default(false) @map("open_for_editors")
   openForMonitors Boolean @default(false) @map("open_for_monitors")
+  openForVolunteers Boolean @default(false) @map("open_for_volunteers")
+  openForManagers Boolean @default(false) @map("open_for_managers")
+  openForDesigners Boolean @default(false) @map("open_for_designers")
+  openForDevelopers Boolean @default(false) @map("open_for_developers")
+  openForDirectors Boolean @default(false) @map("open_for_directors")
+
   finished Boolean @default(false)
   startDate DateTime? @map("start_date")
   endDate DateTime? @map("end_date")
@@ -188,6 +194,11 @@ enum CourseRole {
   TEACHER
   EDITOR
   MONITOR
+  VOLUNTEER
+  DIRECTOR
+  DESIGNER
+  DEVELOPER
+  MANAGER
 }
 
 model CourseEnrolment {

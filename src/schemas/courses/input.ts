@@ -7,6 +7,13 @@ export const CreateCourseDto = CourseSchema.omit({
   finished: true,
   openForTeachers: true,
   openForCoordinators: true,
+  openForDesigners: true,
+  openForDevelopers: true,
+  openForDirectors: true,
+  openForEditors: true,
+  openForManagers: true,
+  openForMonitors: true,
+  openForVolunteers: true,
 }).extend({
   startDate: CourseSchema.shape.startDate.optional(),
   endDate: CourseSchema.shape.endDate.optional(),
